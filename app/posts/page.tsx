@@ -195,26 +195,65 @@ export default function PostsPage() {
   const [dynamicPosts, setDynamicPosts] = useState<BlogPost[]>([]);
   const [isLoadingDynamic, setIsLoadingDynamic] = useState(true);
 
-  // Fetch dynamic posts from API
+  // Fetch dynamic posts from both API sources
   useEffect(() => {
     const fetchDynamicPosts = async () => {
       try {
-        const response = await fetch('/api/posts?published=true');
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            // Convert DailyPost format to BlogPost format
-            const convertedPosts: BlogPost[] = result.data.map((post: DailyPost) => ({
-              id: post.id,
-              title: post.title,
-              date: post.publishDate.toString(),
-              excerpt: post.content.substring(0, 200) + (post.content.length > 200 ? '...' : ''),
-              content: post.content,
-              slug: post.id // Use the post ID as slug for now
-            }));
-            setDynamicPosts(convertedPosts);
+        const allDynamicPosts: BlogPost[] = [];
+
+        // Fetch tournament posts (DailyPost system)
+        try {
+          const dailyResponse = await fetch('/api/posts?published=true');
+          if (dailyResponse.ok) {
+            const dailyResult = await dailyResponse.json();
+            if (dailyResult.success) {
+              const convertedDailyPosts: BlogPost[] = dailyResult.data.map((post: DailyPost) => ({
+                id: post.id,
+                title: post.title,
+                date: post.publishDate.toString(),
+                excerpt: post.content.substring(0, 200) + (post.content.length > 200 ? '...' : ''),
+                content: post.content,
+                slug: post.id // Use the post ID as slug for now
+              }));
+              allDynamicPosts.push(...convertedDailyPosts);
+            }
           }
+        } catch (error) {
+          console.error('Error fetching daily posts:', error);
         }
+
+        // Optionally publish scheduled posts (with error handling)
+        try {
+          await fetch('/api/admin/posts/publish-scheduled', {
+            method: 'POST'
+          });
+        } catch (error) {
+          // Silently continue if publishing fails - don't break the page
+          console.log('Scheduled publishing skipped:', error);
+        }
+
+        // Fetch blog posts (BlogPost system) - the posts saved via admin editor
+        try {
+          const blogResponse = await fetch('/api/admin/posts?status=published');
+          if (blogResponse.ok) {
+            const blogResult = await blogResponse.json();
+            if (blogResult.success) {
+              const convertedBlogPosts: BlogPost[] = blogResult.posts.map((post: any) => ({
+                id: post.id,
+                title: post.title,
+                date: post.publishedAt ? new Date(post.publishedAt).toISOString() : new Date(post.createdAt).toISOString(),
+                excerpt: post.excerpt || post.content.substring(0, 200) + (post.content.length > 200 ? '...' : ''),
+                content: post.content,
+                slug: post.slug
+              }));
+              allDynamicPosts.push(...convertedBlogPosts);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching blog posts:', error);
+        }
+
+        setDynamicPosts(allDynamicPosts);
       } catch (error) {
         console.error('Error fetching dynamic posts:', error);
       } finally {

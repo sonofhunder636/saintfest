@@ -1,209 +1,344 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { DailyPost } from '@/types';
-import { Edit, Eye, Trash2, Plus, Calendar } from 'lucide-react';
+import { usePosts } from '@/hooks/usePosts';
+import { ChakraProvider, Grid, GridItem, Box, Flex, useToast } from '@chakra-ui/react';
+import { saintfestTheme } from '@/lib/chakra-theme';
+import dynamic from 'next/dynamic';
 
-export default function PostsManagementPage() {
+const MarkdownEditor = dynamic(() => import('@/components/admin/MarkdownEditor'), { ssr: false });
+const PostsList = dynamic(() => import('@/components/admin/PostsList'), { ssr: false });
+const PostControlsSidebar = dynamic(() => import('@/components/admin/PostControlsSidebar'), { ssr: false });
+
+interface PostMetadata {
+  title: string;
+  slug: string;
+  status: 'draft' | 'published' | 'scheduled';
+  publishedAt?: Date;
+  scheduledFor?: Date;
+  excerpt?: string;
+  tags: string[];
+  featuredImage?: string;
+}
+
+function PostsManagementPageContent() {
   const router = useRouter();
   const { currentUser, loading } = useRequireAuth('admin');
-  const [posts, setPosts] = useState<DailyPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { savePost, uploadImage, getPost } = usePosts();
+  const toast = useToast();
+  
+  const [currentView, setCurrentView] = useState<'list' | 'editor'>('list');
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [content, setContent] = useState<string>('');
+  const [metadata, setMetadata] = useState<PostMetadata>({
+    title: '',
+    slug: '',
+    status: 'published',
+    tags: [],
+  });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
+  // Auto-save functionality with debouncing
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await fetch('/api/posts');
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            setPosts(result.data);
+    const timer = setTimeout(() => {
+      if ((content.trim() || metadata.title) && currentView === 'editor') {
+        handleAutoSave();
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [content, metadata]);
+
+  const handleAutoSave = useCallback(async () => {
+    if (!content.trim() && !metadata.title) return;
+    
+    try {
+      setIsSaving(true);
+      await savePost(content, metadata, editingPostId || undefined);
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [content, metadata, savePost, editingPostId]);
+
+  // Load post data when editing
+  useEffect(() => {
+    const loadPostForEditing = async () => {
+      if (editingPostId && currentView === 'editor') {
+        try {
+          const post = await getPost(editingPostId);
+          if (post) {
+            setContent(post.content || '');
+            setMetadata({
+              title: post.title || '',
+              slug: post.slug || '',
+              status: post.status || 'draft',
+              publishedAt: post.publishedAt,
+              scheduledFor: post.scheduledFor,
+              excerpt: post.excerpt,
+              tags: post.tags || [],
+              featuredImage: post.featuredImage,
+            });
           }
+        } catch (error) {
+          console.error('Failed to load post:', error);
         }
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-      } finally {
-        setIsLoading(false);
+      } else if (currentView === 'editor' && !editingPostId) {
+        // Reset for new post
+        setContent('');
+        setMetadata({
+          title: '',
+          slug: '',
+          status: 'published',
+          tags: [],
+        });
       }
     };
 
-    if (currentUser) {
-      fetchPosts();
-    }
-  }, [currentUser]);
+    loadPostForEditing();
+  }, [editingPostId, currentView, getPost]);
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+  const handleCreateNew = () => {
+    setEditingPostId(null);
+    setCurrentView('editor');
+  };
+
+  const handleEditPost = (postId: string) => {
+    setEditingPostId(postId);
+    setCurrentView('editor');
+  };
+
+  const handleBackToList = () => {
+    setCurrentView('list');
+    setEditingPostId(null);
+    setContent('');
+    setMetadata({
+      title: '',
+      slug: '',
+      status: 'published',
+      tags: [],
     });
   };
 
-  const getRoundColor = (round: string) => {
-    switch (round) {
-      case 'round1': return 'bg-blue-100 text-blue-800';
-      case 'round2': return 'bg-green-100 text-green-800';
-      case 'semifinals': return 'bg-yellow-100 text-yellow-800';
-      case 'finals': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const deletePost = async (postId: string) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
-
+  const handleSavePost = async () => {
     try {
-      const response = await fetch(`/api/posts/${postId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setPosts(posts.filter(post => post.id !== postId));
-        alert('Post deleted successfully');
-      } else {
-        throw new Error('Failed to delete post');
+      setIsSaving(true);
+      const result = await savePost(content, metadata, editingPostId || undefined);
+      if (result) {
+        setLastSaved(new Date());
+        
+        // Show success notification
+        toast({
+          title: 'Post saved successfully!',
+          description: `"${metadata.title}" has been saved as a ${metadata.status}.`,
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+        
+        // Redirect back to list view after successful save
+        setTimeout(() => {
+          setCurrentView('list');
+        }, 1500); // Brief delay to show the success message
       }
     } catch (error) {
-      console.error('Error deleting post:', error);
-      alert('Error deleting post');
+      console.error('Failed to save post:', error);
+      
+      // Show error notification
+      toast({
+        title: 'Save failed',
+        description: 'There was an error saving your post. Please try again.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  if (loading || isLoading) {
+  const handleImageUpload = async (file: File) => {
+    try {
+      const imageUrl = await uploadImage(file, editingPostId || undefined);
+      return imageUrl;
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      throw error;
+    }
+  };
+
+  const calculateStats = () => {
+    const wordCount = content.split(/\s+/).filter(Boolean).length;
+    const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+    return { wordCount, readingTime };
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading posts...</p>
+      <ChakraProvider theme={saintfestTheme}>
+        <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#fffbeb'}}>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4" style={{borderBottomColor: '#8FBC8F'}}></div>
+            <p style={{fontFamily: 'var(--font-cormorant)', fontSize: '1.125rem', color: '#6b7280'}}>Loading posts management...</p>
+          </div>
         </div>
-      </div>
+      </ChakraProvider>
     );
   }
 
   if (!currentUser) {
-    return <div>Access denied</div>;
+    return (
+      <ChakraProvider theme={saintfestTheme}>
+        <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#fffbeb'}}>
+          <div className="text-center">
+            <p style={{fontFamily: 'var(--font-cormorant)', fontSize: '1.125rem', color: '#ef4444'}}>Access denied. Admin privileges required.</p>
+            <button 
+              onClick={() => router.push('/admin/login')}
+              style={{
+                marginTop: '1rem',
+                padding: '0.5rem 1rem',
+                backgroundColor: '#8FBC8F',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.25rem',
+                cursor: 'pointer'
+              }}
+            >
+              Go to Login
+            </button>
+          </div>
+        </div>
+      </ChakraProvider>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{backgroundColor: '#fffbeb'}}>
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <header style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+        width: '100%',
+        backgroundColor: '#8FBC8F',
+        padding: '1rem 0',
+        marginBottom: '2rem',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
+      }}>
+        <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-sorts-mill text-gray-900">Posts Management</h1>
-              <p className="text-gray-600">Manage your daily tournament posts</p>
+            <div className="flex items-center space-x-4">
+              <h1 style={{
+                fontSize: '2.5rem',
+                fontFamily: 'var(--font-sorts-mill)',
+                color: 'white',
+                fontWeight: '600',
+                textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+              }}>
+                Posts Management
+              </h1>
+              {currentView === 'editor' && (
+                <button
+                  onClick={handleBackToList}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.875rem',
+                    fontFamily: 'var(--font-league-spartan)',
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                >
+                  ← Back to Posts List
+                </button>
+              )}
             </div>
-            <div className="flex gap-2">
-              <Button onClick={() => router.push('/admin/posts/create')}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Post
-              </Button>
-              <Button variant="outline" onClick={() => router.push('/admin')}>
-                Back to Admin
-              </Button>
-            </div>
+            <nav style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+              <a href="/admin" style={{
+                fontSize: '0.875rem',
+                fontFamily: 'var(--font-league-spartan)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'white',
+                textDecoration: 'none',
+                fontWeight: '500',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.25rem',
+                backgroundColor: 'rgba(255,255,255,0.1)'
+              }}>
+                Admin Dashboard
+              </a>
+            </nav>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {posts.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Posts Yet</h3>
-              <p className="text-gray-600 mb-4">
-                Create your first daily tournament post to get started.
-              </p>
-              <Button onClick={() => router.push('/admin/posts/create')}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Post
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-6">
-            {posts.map((post) => (
-              <Card key={post.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge className={getRoundColor(post.bracketRound)}>
-                          {post.bracketRound.replace(/(\d)/, ' $1').toUpperCase()}
-                        </Badge>
-                        <Badge variant="outline">Day {post.dayNumber}</Badge>
-                        {post.isPublished ? (
-                          <Badge className="bg-green-100 text-green-800">Published</Badge>
-                        ) : (
-                          <Badge variant="secondary">Draft</Badge>
-                        )}
-                      </div>
-                      <CardTitle className="text-xl mb-2">{post.title}</CardTitle>
-                      <div className="text-sm text-gray-600">
-                        {post.matchup && (
-                          <p className="mb-1">
-                            <strong>Matchup:</strong> {post.matchup.description}
-                          </p>
-                        )}
-                        <p>
-                          <strong>Publish Date:</strong> {formatDate(post.publishDate)}
-                        </p>
-                        <p>
-                          <strong>Created:</strong> {formatDate(post.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 ml-4">
-                      <Button size="sm" variant="outline" onClick={() => router.push(`/posts/${post.id}`)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => router.push(`/admin/posts/${post.id}/edit`)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => deletePost(post.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-gray-700">
-                    <p className="line-clamp-3">
-                      {post.content.substring(0, 200)}
-                      {post.content.length > 200 && '...'}
-                    </p>
-                  </div>
-                  
-                  {post.previousWinner && (
-                    <div className="mt-4 p-3 bg-gray-50 rounded-md">
-                      <p className="text-sm font-medium text-gray-700">
-                        Previous Winner: {post.previousWinner.saintId} ({post.previousWinner.percentage}%)
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      <Box maxW="7xl" mx="auto" px={4} pb={8}>
+        {currentView === 'list' && (
+          <PostsList 
+            onCreateNew={handleCreateNew}
+            onEditPost={handleEditPost}
+          />
         )}
-      </main>
+
+        {currentView === 'editor' && (
+          <Grid
+            templateColumns={{ base: '1fr', lg: '350px 1fr' }}
+            gap={6}
+            h="full"
+            alignItems="start"
+          >
+            {/* Left Sidebar - Post Controls */}
+            <GridItem>
+              <Box position="sticky" top="120px">
+                <PostControlsSidebar
+                  metadata={metadata}
+                  onMetadataChange={setMetadata}
+                  onSave={handleSavePost}
+                  isEditMode={!!editingPostId}
+                  isSaving={isSaving}
+                  lastSaved={lastSaved || undefined}
+                  wordCount={calculateStats().wordCount}
+                  readingTime={calculateStats().readingTime}
+                />
+              </Box>
+            </GridItem>
+
+            {/* Right Side - Markdown Editor */}
+            <GridItem>
+              <Box h="full">
+                <MarkdownEditor
+                  key={editingPostId || 'new'}
+                  content={content}
+                  onContentChange={setContent}
+                  onImageUpload={handleImageUpload}
+                  isFullscreen={isFullscreen}
+                  onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+                />
+              </Box>
+            </GridItem>
+          </Grid>
+        )}
+      </Box>
     </div>
+  );
+}
+
+// Main wrapper component that provides Chakra UI context
+export default function PostsManagementPage() {
+  return (
+    <ChakraProvider theme={saintfestTheme}>
+      <PostsManagementPageContent />
+    </ChakraProvider>
   );
 }

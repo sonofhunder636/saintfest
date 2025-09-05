@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { DailyPost, Saint, VotingSession } from "@/types";
 import VotingWidget from "@/components/voting/VotingWidget";
 import Navigation from "@/components/Navigation";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface BlogPost {
   id: string;
@@ -265,7 +267,37 @@ export default function PostPage({ params }: PostPageProps) {
         return;
       }
 
-      // If not found in historical posts, try to fetch from API (dynamic posts)
+      // If not found in historical posts, try to fetch from blog posts API first
+      try {
+        const blogResponse = await fetch('/api/admin/posts');
+        if (blogResponse.ok) {
+          const blogResult = await blogResponse.json();
+          if (blogResult.success) {
+            const blogPost = blogResult.posts.find((p: any) => p.slug === params.slug);
+            if (blogPost) {
+              // Convert admin blog post to BlogPost format
+              foundPost = {
+                id: blogPost.id,
+                title: blogPost.title,
+                date: blogPost.publishedAt 
+                  ? new Date(blogPost.publishedAt).toISOString().split('T')[0] 
+                  : new Date(blogPost.createdAt).toISOString().split('T')[0],
+                excerpt: blogPost.excerpt || blogPost.content.substring(0, 200) + (blogPost.content.length > 200 ? '...' : ''),
+                content: blogPost.content,
+                slug: blogPost.slug
+              };
+              setPost(foundPost);
+              setIsDynamicPost(false); // Blog posts don't have voting
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching blog post:', error);
+      }
+
+      // If not found in blog posts, try daily posts (tournament posts)
       try {
         const response = await fetch(`/api/posts/${params.slug}`);
         if (response.ok) {
@@ -500,15 +532,26 @@ export default function PostPage({ params }: PostPageProps) {
             color: '#374151',
             marginBottom: '3rem'
           }}>
-            {post.content.split('\n').map((paragraph, index) => (
-              <p 
-                key={index} 
-                style={{marginBottom: '1.5rem'}}
-                dangerouslySetInnerHTML={{
-                  __html: formatTextContent(paragraph)
-                }}
-              />
-            ))}
+            {/* Check if content looks like Markdown (contains # or **) */}
+            {post.content.includes('#') || post.content.includes('**') || post.content.includes('*') ? (
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                className="prose prose-lg prose-green max-w-none"
+              >
+                {post.content}
+              </ReactMarkdown>
+            ) : (
+              /* Legacy plain text content with basic formatting */
+              post.content.split('\n').map((paragraph, index) => (
+                <p 
+                  key={index} 
+                  style={{marginBottom: '1.5rem'}}
+                  dangerouslySetInnerHTML={{
+                    __html: formatTextContent(paragraph)
+                  }}
+                />
+              ))
+            )}
           </div>
 
           {/* Voting Widget for Dynamic Posts */}
