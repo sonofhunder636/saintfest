@@ -14,10 +14,8 @@ function AdminLoginContent() {
   const { signInWithGoogle, isAuthenticated, isAuthorizedAdmin, clearSession } = useAdminAuth();
   const router = useRouter();
 
-  // Clear any existing admin session when component mounts
-  useEffect(() => {
-    clearSession();
-  }, [clearSession]);
+  // Only clear session if there's an error or explicit logout, not on every mount
+  // This prevents the login loop issue
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,8 +25,7 @@ function AdminLoginContent() {
     try {
       // Use Google OAuth for actual authentication
       await signInWithGoogle();
-      // If successful and authorized, redirect to admin dashboard
-      router.push('/admin');
+      // Redirect will be handled by the useEffect above
     } catch (error: any) {
       console.error('Admin login error:', error);
       setError(error.message || 'Authentication failed. Please try again.');
@@ -37,11 +34,12 @@ function AdminLoginContent() {
     }
   };
 
-  // If already authenticated and authorized, redirect to admin dashboard
-  if (isAuthenticated && isAuthorizedAdmin) {
-    router.push('/admin');
-    return null;
-  }
+  // Effect to handle redirect when authentication state changes
+  useEffect(() => {
+    if (isAuthenticated && isAuthorizedAdmin) {
+      router.push('/admin');
+    }
+  }, [isAuthenticated, isAuthorizedAdmin, router]);
 
   return (
     <div className="min-h-screen text-center" style={{backgroundColor: '#fffbeb'}}>
