@@ -24,7 +24,7 @@ const sampleSaints = [
 ];
 
 function AdminContent() {
-  const { adminUser, loading, signOut } = useAdminAuth();
+  const { adminUser, loading } = useAdminAuth();
   const [saints, setSaints] = useState(sampleSaints);
   const router = useRouter();
 
@@ -49,15 +49,6 @@ function AdminContent() {
     return null; // Will redirect above
   }
 
-  const handleBackToSite = async () => {
-    try {
-      await signOut(); // Clear admin session
-      router.push('/'); // Navigate to homepage
-    } catch (error) {
-      console.error('Logout error:', error);
-      router.push('/'); // Navigate anyway
-    }
-  };
 
   const handleUpdateSaintImage = (saintId: string, imageUrl: string) => {
     setSaints(prev => 
@@ -90,47 +81,55 @@ function AdminContent() {
                 fontFamily: 'var(--font-sorts-mill)',
                 color: 'white',
                 fontWeight: '600',
-                textShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                marginBottom: '0.25rem'
+                textShadow: '0 1px 2px rgba(0,0,0,0.1)'
               }}>
                 Saintfest Admin
               </h1>
-              <p style={{
-                fontFamily: 'var(--font-cormorant)',
-                color: 'rgba(255,255,255,0.9)',
-                fontSize: '1.125rem'
-              }}>
-                Manage your Saintfest tournament
-              </p>
             </div>
-            <div className="flex items-center space-x-4">
-              <span style={{
+            <nav style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+              <a href="/bracket" style={{
                 fontSize: '0.875rem',
                 fontFamily: 'var(--font-league-spartan)',
-                color: 'rgba(255,255,255,0.9)',
-                fontWeight: '500'
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'white',
+                textDecoration: 'none',
+                fontWeight: '500',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.25rem',
+                backgroundColor: 'rgba(255,255,255,0.1)'
               }}>
-                Welcome, {adminUser.displayName}
-              </span>
-              <button
-                onClick={handleBackToSite}
-                style={{
-                  fontSize: '0.875rem',
-                  fontFamily: 'var(--font-league-spartan)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  color: '#8FBC8F',
-                  backgroundColor: 'white',
-                  border: '1px solid white',
-                  borderRadius: '0.375rem',
-                  padding: '0.5rem 1rem',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                Back to Site
-              </button>
-            </div>
+                2025 Saintfest Bracket
+              </a>
+              <a href="/about" style={{
+                fontSize: '0.875rem',
+                fontFamily: 'var(--font-league-spartan)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'white',
+                textDecoration: 'none',
+                fontWeight: '500',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.25rem',
+                backgroundColor: 'rgba(255,255,255,0.1)'
+              }}>
+                About
+              </a>
+              <a href="/posts" style={{
+                fontSize: '0.875rem',
+                fontFamily: 'var(--font-league-spartan)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'white',
+                textDecoration: 'none',
+                fontWeight: '500',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.25rem',
+                backgroundColor: 'rgba(255,255,255,0.1)'
+              }}>
+                Posts
+              </a>
+            </nav>
           </div>
         </div>
       </header>
