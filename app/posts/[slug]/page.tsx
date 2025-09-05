@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DailyPost, Saint, VotingSession } from "@/types";
 import VotingWidget from "@/components/voting/VotingWidget";
+import Navigation from "@/components/Navigation";
 
 interface BlogPost {
   id: string;
@@ -437,50 +438,7 @@ export default function PostPage({ params }: PostPageProps) {
           </Link>
           
           {/* Navigation */}
-          <nav style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-            <Link href="/bracket" style={{
-              fontSize: '0.875rem',
-              fontFamily: 'var(--font-league-spartan)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              color: 'white',
-              textDecoration: 'none',
-              fontWeight: '500',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.25rem',
-              backgroundColor: 'rgba(255,255,255,0.1)'
-            }}>
-              2025 Saintfest Bracket
-            </Link>
-            <Link href="/about" style={{
-              fontSize: '0.875rem',
-              fontFamily: 'var(--font-league-spartan)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              color: 'white',
-              textDecoration: 'none',
-              fontWeight: '500',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.25rem',
-              backgroundColor: 'rgba(255,255,255,0.1)'
-            }}>
-              About
-            </Link>
-            <Link href="/posts" style={{
-              fontSize: '0.875rem',
-              fontFamily: 'var(--font-league-spartan)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              color: 'white',
-              textDecoration: 'none',
-              fontWeight: '500',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.25rem',
-              backgroundColor: 'rgba(255,255,255,0.3)'
-            }}>
-              Posts
-            </Link>
-          </nav>
+          <Navigation />
         </div>
       </header>
 
