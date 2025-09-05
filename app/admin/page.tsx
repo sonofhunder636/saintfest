@@ -6,8 +6,7 @@ import { AdminAuthProvider, useAdminAuth } from '@/contexts/AdminAuthContext';
 import ImageManager from '@/components/admin/ImageManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ImageIcon, Users, Trophy, Settings, FileText } from 'lucide-react';
+import { ImageIcon, Users, Trophy, FileText } from 'lucide-react';
 import SaintImporter from '@/components/admin/SaintImporter';
 import SaintManager from '@/components/admin/SaintManager';
 
@@ -48,7 +47,6 @@ function AdminContent() {
   if (!adminUser) {
     return null; // Will redirect above
   }
-
 
   const handleUpdateSaintImage = (saintId: string, imageUrl: string) => {
     setSaints(prev => 
@@ -137,97 +135,8 @@ function AdminContent() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="space-y-6">
-          {/* Custom Tab Navigation */}
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-2">
-            <div className="grid grid-cols-5 gap-1">
-              <button
-                onClick={() => document.querySelector('[data-tab="images"]')?.click()}
-                className="flex items-center justify-center space-x-2 px-4 py-3 rounded-md transition-colors hover:bg-gray-100"
-                style={{
-                  fontSize: '0.875rem',
-                  fontFamily: 'var(--font-league-spartan)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  fontWeight: '500',
-                  color: '#374151'
-                }}
-              >
-                <ImageIcon className="h-4 w-4" />
-                <span>Images</span>
-              </button>
-              <button
-                onClick={() => document.querySelector('[data-tab="saints"]')?.click()}
-                className="flex items-center justify-center space-x-2 px-4 py-3 rounded-md transition-colors hover:bg-gray-100"
-                style={{
-                  fontSize: '0.875rem',
-                  fontFamily: 'var(--font-league-spartan)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  fontWeight: '500',
-                  color: '#374151'
-                }}
-              >
-                <Users className="h-4 w-4" />
-                <span>Saints</span>
-              </button>
-              <button
-                onClick={() => document.querySelector('[data-tab="tournaments"]')?.click()}
-                className="flex items-center justify-center space-x-2 px-4 py-3 rounded-md transition-colors hover:bg-gray-100"
-                style={{
-                  fontSize: '0.875rem',
-                  fontFamily: 'var(--font-league-spartan)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  fontWeight: '500',
-                  color: '#374151'
-                }}
-              >
-                <Trophy className="h-4 w-4" />
-                <span>Tournaments</span>
-              </button>
-              <button
-                onClick={() => document.querySelector('[data-tab="posts"]')?.click()}
-                className="flex items-center justify-center space-x-2 px-4 py-3 rounded-md transition-colors hover:bg-gray-100"
-                style={{
-                  fontSize: '0.875rem',
-                  fontFamily: 'var(--font-league-spartan)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  fontWeight: '500',
-                  color: '#374151'
-                }}
-              >
-                <FileText className="h-4 w-4" />
-                <span>Posts</span>
-              </button>
-              <button
-                onClick={() => document.querySelector('[data-tab="settings"]')?.click()}
-                className="flex items-center justify-center space-x-2 px-4 py-3 rounded-md transition-colors hover:bg-gray-100"
-                style={{
-                  fontSize: '0.875rem',
-                  fontFamily: 'var(--font-league-spartan)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  fontWeight: '500',
-                  color: '#374151'
-                }}
-              >
-                <Settings className="h-4 w-4" />
-                <span>Settings</span>
-              </button>
-            </div>
-          </div>
 
-        <Tabs defaultValue="images" className="space-y-6">
-          <TabsList className="hidden">
-            <TabsTrigger value="images" data-tab="images">Images</TabsTrigger>
-            <TabsTrigger value="saints" data-tab="saints">Saints</TabsTrigger>
-            <TabsTrigger value="tournaments" data-tab="tournaments">Tournaments</TabsTrigger>
-            <TabsTrigger value="posts" data-tab="posts">Posts</TabsTrigger>
-            <TabsTrigger value="settings" data-tab="settings">Settings</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="images">
+          {/* Images Section */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
               <div className="p-6 border-b border-gray-200">
                 <h2 style={{
@@ -254,9 +163,8 @@ function AdminContent() {
                 />
               </div>
             </div>
-          </TabsContent>
 
-          <TabsContent value="saints">
+          {/* Saints Section */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
               <div className="p-6 border-b border-gray-200">
                 <h2 style={{
@@ -281,9 +189,8 @@ function AdminContent() {
                 <SaintManager />
               </div>
             </div>
-          </TabsContent>
 
-          <TabsContent value="tournaments">
+          {/* Tournaments Section */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
               <div className="p-6 border-b border-gray-200">
                 <h2 style={{
@@ -386,9 +293,8 @@ function AdminContent() {
                 </div>
               </div>
             </div>
-          </TabsContent>
 
-          <TabsContent value="posts">
+          {/* Posts Section */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
               <div className="p-6 border-b border-gray-200">
                 <h2 style={{
@@ -497,32 +403,6 @@ function AdminContent() {
                 </div>
               </div>
             </div>
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div className="text-center py-12">
-                <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 style={{
-                  fontSize: '1.25rem',
-                  fontFamily: 'var(--font-sorts-mill)',
-                  fontWeight: '600',
-                  color: '#111827',
-                  marginBottom: '0.5rem'
-                }}>
-                  System Settings
-                </h3>
-                <p style={{
-                  fontFamily: 'var(--font-cormorant)',
-                  color: '#6b7280',
-                  fontSize: '1.125rem'
-                }}>
-                  Global configuration options coming soon.
-                </p>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
         </div>
       </main>
     </div>
