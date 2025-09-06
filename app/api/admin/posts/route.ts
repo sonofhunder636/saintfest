@@ -7,16 +7,30 @@ export interface BlogPost {
   id?: string;
   title: string;
   slug: string;
-  content: string;
-  excerpt?: string;
-  status: 'draft' | 'published' | 'scheduled';
-  publishedAt?: Date;
-  scheduledFor?: Date;
-  tags: string[];
-  featuredImage?: string;
   author: string;
+  authorId: string;
+  status: 'draft' | 'published' | 'archived' | 'scheduled';
+  featured: boolean;
   createdAt: Date;
   updatedAt: Date;
+  publishedAt?: Date;
+  scheduledAt?: Date;
+  content: string;
+  excerpt: string;
+  tags: string[];
+  categories: string[];
+  readTime: number;
+  views: number;
+  likes: number;
+  comments: number;
+  seoTitle: string;
+  seoDescription: string;
+  wordCount: number;
+  images: string[];
+  priority: 'low' | 'medium' | 'high';
+  featuredImage?: string;
+  // Legacy fields for backward compatibility
+  scheduledFor?: Date;
   metadata?: {
     readTime?: number;
     wordCount?: number;
@@ -29,6 +43,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
+    const slug = searchParams.get('slug');
     const limitNum = parseInt(searchParams.get('limit') || '10');
     const lastDoc = searchParams.get('lastDoc');
 
@@ -41,8 +56,16 @@ export async function GET(request: NextRequest) {
       limit(limitNum)
     );
 
+    // Filter by slug if provided (for slug validation)
+    if (slug) {
+      postsQuery = query(
+        collection(db, 'posts'),
+        where('slug', '==', slug),
+        limit(1)
+      );
+    }
     // Filter by status if provided (without orderBy to avoid index requirement)
-    if (status && ['draft', 'published', 'scheduled'].includes(status)) {
+    else if (status && ['draft', 'published', 'scheduled'].includes(status)) {
       postsQuery = query(
         collection(db, 'posts'),
         where('status', '==', status),
@@ -50,8 +73,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Add pagination if lastDoc provided and we're not filtering by status
-    if (lastDoc && !status) {
+    // Add pagination if lastDoc provided and we're not filtering by status or slug
+    if (lastDoc && !status && !slug) {
       const lastDocRef = doc(db, 'posts', lastDoc);
       const lastDocSnap = await getDoc(lastDocRef);
       if (lastDocSnap.exists()) {
@@ -108,10 +131,32 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, slug, content, status = 'draft', tags = [], excerpt, featuredImage, scheduledFor } = body;
+    console.log('POST /api/admin/posts - Received body:', JSON.stringify(body, null, 2));
+    const { 
+      title, 
+      slug, 
+      content, 
+      status = 'draft', 
+      tags = [], 
+      categories = [],
+      excerpt, 
+      featuredImage, 
+      scheduledFor, 
+      scheduledAt,
+      featured = false,
+      priority = 'medium',
+      seoTitle,
+      seoDescription
+    } = body;
 
     // Validate required fields
     if (!title || !content) {
+      console.log('Validation failed: Missing required fields', { 
+        hasTitle: !!title, 
+        hasContent: !!content,
+        titleLength: title?.length || 0,
+        contentLength: content?.length || 0
+      });
       return NextResponse.json(
         { success: false, error: 'Title and content are required' },
         { status: 400 }
@@ -127,10 +172,12 @@ export async function POST(request: NextRequest) {
       .trim();
 
     // Check if slug already exists
+    console.log('Checking slug uniqueness:', { finalSlug });
     const slugQuery = query(collection(db, 'posts'), where('slug', '==', finalSlug));
     const slugSnapshot = await getDocs(slugQuery);
     
     if (!slugSnapshot.empty) {
+      console.log('Slug validation failed: Duplicate slug found', { finalSlug });
       return NextResponse.json(
         { success: false, error: 'A post with this slug already exists' },
         { status: 400 }
@@ -151,26 +198,52 @@ export async function POST(request: NextRequest) {
       slug: finalSlug,
       content,
       excerpt: excerpt || content.substring(0, 150) + (content.length > 150 ? '...' : ''),
-      status: status as 'draft' | 'published' | 'scheduled',
+      status: status as 'draft' | 'published' | 'archived' | 'scheduled',
       tags: Array.isArray(tags) ? tags : [],
-      featuredImage,
+      categories: Array.isArray(categories) ? categories : [],
       author: 'admin', // TODO: Get from auth context
+      authorId: 'admin-id', // TODO: Get from auth context
+      featured: Boolean(featured),
+      priority: (priority as 'low' | 'medium' | 'high') || 'medium',
       createdAt: now,
       updatedAt: now,
-      publishedAt: status === 'published' ? now : undefined,
-      scheduledFor: scheduledFor ? new Date(scheduledFor) : undefined,
+      readTime,
+      wordCount,
+      views: 0,
+      likes: 0,
+      comments: 0,
+      seoTitle: seoTitle || title,
+      seoDescription: seoDescription || (excerpt || content.substring(0, 160)),
+      images,
+      // Legacy metadata for backward compatibility
       metadata: {
         readTime,
         wordCount,
         images
-      }
+      },
+      // Only include fields if they have values (Firebase doesn't accept undefined)
+      ...(featuredImage && { featuredImage }),
+      ...(status === 'published' && { publishedAt: now }),
+      ...(scheduledFor && { scheduledFor: new Date(scheduledFor) }),
+      ...(scheduledAt && { scheduledAt: new Date(scheduledAt) })
     };
 
     const docRef = await addDoc(collection(db, 'posts'), postData);
     
+    // Create response with properly serialized dates
+    const responsePost = {
+      id: docRef.id,
+      ...postData,
+      createdAt: postData.createdAt.toISOString(),
+      updatedAt: postData.updatedAt.toISOString(),
+      publishedAt: postData.publishedAt?.toISOString(),
+      scheduledFor: postData.scheduledFor?.toISOString(),
+      scheduledAt: postData.scheduledAt?.toISOString()
+    };
+    
     return NextResponse.json({
       success: true,
-      post: { id: docRef.id, ...postData }
+      post: responsePost
     });
 
   } catch (error) {

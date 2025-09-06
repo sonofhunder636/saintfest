@@ -1,20 +1,36 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import dynamic from 'next/dynamic';
 import { 
   Bold, Italic, Underline, Strikethrough, 
   Heading1, Heading2, Heading3, 
   List, ListOrdered, Quote, Code, 
   Link, Image, Eye, EyeOff, 
-  Upload
+  Upload, Maximize, Minimize
 } from 'lucide-react';
-import { Button } from '@chakra-ui/button';
+import {
+  Box,
+  Flex,
+  Grid,
+  GridItem,
+  HStack,
+  VStack,
+  Button,
+  IconButton,
+  Text,
+  Textarea,
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
+  Badge,
+  Divider,
+  Tooltip,
+  useColorModeValue,
+  useToast
+} from '@chakra-ui/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
-// Dynamic imports to avoid SSR issues
-const SplitPane = dynamic(() => import('react-split-pane-v2'), { ssr: false });
 
 interface MarkdownEditorProps {
   initialContent?: string;
@@ -34,9 +50,18 @@ export default function MarkdownEditor({
   onToggleFullscreen,
 }: MarkdownEditorProps) {
   const [showPreview, setShowPreview] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const toast = useToast();
+  
+  // Theme colors
+  const bgColor = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const toolbarBg = useColorModeValue('gray.50', 'gray.700');
+  const textColor = useColorModeValue('gray.800', 'gray.100');
+  const mutedTextColor = useColorModeValue('gray.600', 'gray.400');
 
   // Initialize content from props
   useEffect(() => {
@@ -67,138 +92,238 @@ export default function MarkdownEditor({
     const file = e.target.files?.[0];
     if (!file || !onImageUpload) return;
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please select an image file (JPG, PNG, GIF, etc.)',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Please select an image smaller than 5MB',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setIsUploading(true);
     try {
       const imageUrl = await onImageUpload(file);
       insertText(`![${file.name}](${imageUrl})`);
+      toast({
+        title: 'Image uploaded',
+        description: 'Image has been successfully uploaded and inserted',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
     } catch (error) {
       console.error('Image upload failed:', error);
+      toast({
+        title: 'Upload failed',
+        description: 'Failed to upload image. Please try again.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
-  }, [insertText, onImageUpload]);
+  }, [insertText, onImageUpload, toast]);
 
   const toolbarButtons = [
-    { icon: Bold, action: () => insertText('**', '**'), title: 'Bold' },
-    { icon: Italic, action: () => insertText('*', '*'), title: 'Italic' },
-    { icon: Strikethrough, action: () => insertText('~~', '~~'), title: 'Strikethrough' },
-    { icon: Heading1, action: () => insertText('# '), title: 'Heading 1' },
-    { icon: Heading2, action: () => insertText('## '), title: 'Heading 2' },
-    { icon: Heading3, action: () => insertText('### '), title: 'Heading 3' },
-    { icon: List, action: () => insertText('- '), title: 'Bullet List' },
-    { icon: ListOrdered, action: () => insertText('1. '), title: 'Numbered List' },
-    { icon: Quote, action: () => insertText('> '), title: 'Quote' },
-    { icon: Code, action: () => insertText('`', '`'), title: 'Inline Code' },
-    { icon: Link, action: () => insertText('[', '](url)'), title: 'Link' },
+    { icon: Bold, action: () => insertText('**', '**'), title: 'Bold (Ctrl+B)', hotkey: 'Ctrl+B' },
+    { icon: Italic, action: () => insertText('*', '*'), title: 'Italic (Ctrl+I)', hotkey: 'Ctrl+I' },
+    { icon: Strikethrough, action: () => insertText('~~', '~~'), title: 'Strikethrough', hotkey: null },
+    { icon: Heading1, action: () => insertText('# '), title: 'Heading 1', hotkey: null },
+    { icon: Heading2, action: () => insertText('## '), title: 'Heading 2', hotkey: null },
+    { icon: Heading3, action: () => insertText('### '), title: 'Heading 3', hotkey: null },
+    { icon: List, action: () => insertText('- '), title: 'Bullet List', hotkey: null },
+    { icon: ListOrdered, action: () => insertText('1. '), title: 'Numbered List', hotkey: null },
+    { icon: Quote, action: () => insertText('> '), title: 'Quote', hotkey: null },
+    { icon: Code, action: () => insertText('`', '`'), title: 'Inline Code', hotkey: null },
+    { icon: Link, action: () => insertText('[', '](url)'), title: 'Link', hotkey: null },
   ];
 
+  // Calculate statistics
+  const wordCount = content.split(/\s+/).filter(Boolean).length;
+  const charCount = content.length;
+  const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+
   return (
-    <div className={`bg-white border border-gray-200 rounded-lg shadow-sm ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
-      {/* Toolbar */}
-      <div className="p-3 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1 flex-wrap">
+    <Card
+      bg={bgColor}
+      borderColor={borderColor}
+      shadow="lg"
+      borderRadius="xl"
+      borderWidth="1px"
+      position={isFullscreen ? 'fixed' : 'relative'}
+      top={isFullscreen ? 0 : 'auto'}
+      left={isFullscreen ? 0 : 'auto'}
+      right={isFullscreen ? 0 : 'auto'}
+      bottom={isFullscreen ? 0 : 'auto'}
+      zIndex={isFullscreen ? 1000 : 'auto'}
+      h={isFullscreen ? '100vh' : { base: '70vh', lg: '80vh' }}
+    >
+      {/* Toolbar Header */}
+      <CardHeader bg={toolbarBg} borderTopRadius="xl" py={3}>
+        <Flex justify="space-between" align="center">
+          <HStack spacing={1} wrap="wrap">
             {toolbarButtons.map(({ icon: Icon, action, title }) => (
-              <Button
-                key={title}
-                variant="ghost"
-                size="sm"
-                onClick={action}
-                title={title}
-                className="h-8 w-8 p-0"
-              >
-                <Icon className="h-4 w-4" />
-              </Button>
+              <Tooltip key={title} label={title} hasArrow>
+                <IconButton
+                  aria-label={title}
+                  icon={<Icon size={16} />}
+                  size="sm"
+                  variant="ghost"
+                  onClick={action}
+                  _hover={{ bg: useColorModeValue('gray.100', 'gray.600') }}
+                />
+              </Tooltip>
             ))}
-            <div className="w-px h-6 bg-gray-300 mx-2" />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              title="Upload Image"
-              className="h-8 w-8 p-0"
-              disabled={!onImageUpload}
-            >
-              <Image className="h-4 w-4" />
-            </Button>
+            
+            <Divider orientation="vertical" h="24px" mx={2} />
+            
+            <Tooltip label="Upload Image" hasArrow>
+              <IconButton
+                aria-label="Upload Image"
+                icon={<Image size={16} />}
+                size="sm"
+                variant="ghost"
+                onClick={() => fileInputRef.current?.click()}
+                isLoading={isUploading}
+                isDisabled={!onImageUpload}
+                _hover={{ bg: useColorModeValue('gray.100', 'gray.600') }}
+              />
+            </Tooltip>
+            
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
               onChange={handleImageUpload}
-              className="hidden"
+              style={{ display: 'none' }}
             />
-          </div>
+          </HStack>
           
-          <div className="flex items-center space-x-2">
+          <HStack spacing={2}>
             <Button
               variant="outline"
               size="sm"
+              leftIcon={showPreview ? <EyeOff size={16} /> : <Eye size={16} />}
               onClick={() => setShowPreview(!showPreview)}
             >
-              {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              <span className="ml-1 hidden sm:inline">
+              <Text display={{ base: 'none', md: 'block' }}>
                 {showPreview ? 'Hide Preview' : 'Show Preview'}
-              </span>
+              </Text>
             </Button>
+            
             {onToggleFullscreen && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onToggleFullscreen}
-              >
-                {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-              </Button>
+              <Tooltip label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'} hasArrow>
+                <IconButton
+                  aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                  icon={isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                  size="sm"
+                  variant="outline"
+                  onClick={onToggleFullscreen}
+                />
+              </Tooltip>
             )}
-          </div>
-        </div>
-      </div>
+          </HStack>
+        </Flex>
+      </CardHeader>
 
       {/* Editor Area */}
-      <div className={`${isFullscreen ? 'h-[calc(100vh-80px)]' : 'min-h-[200vh]'}`}>
-        {showPreview ? (
-          <SplitPane split="vertical" defaultSize="75%">
-            <div className="h-full p-2">
-              <textarea
+      <CardBody p={0} flex={1} overflow="hidden">
+        <Box h="full">
+          {showPreview ? (
+            <Grid templateColumns="1fr 1fr" h="full">
+              <GridItem>
+                <Box h="full" p={4}>
+                  <Textarea
+                    ref={textareaRef}
+                    value={content}
+                    onChange={(e) => onContentChange(e.target.value)}
+                    placeholder="Start writing your post in Markdown..."
+                    resize="none"
+                    border="none"
+                    outline="none"
+                    h="full"
+                    fontFamily="mono"
+                    fontSize="sm"
+                    color={textColor}
+                    _focus={{ boxShadow: 'none' }}
+                    _placeholder={{ color: mutedTextColor }}
+                  />
+                </Box>
+              </GridItem>
+              
+              <GridItem borderLeft="1px" borderColor={borderColor}>
+                <Box h="full" overflow="auto" p={4} className="prose prose-sm max-w-none" color={textColor}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {content || '*Start typing to see the preview...*'}
+                  </ReactMarkdown>
+                </Box>
+              </GridItem>
+            </Grid>
+          ) : (
+            <Box h="full" p={4}>
+              <Textarea
                 ref={textareaRef}
                 value={content}
                 onChange={(e) => onContentChange(e.target.value)}
-                className="w-full h-full resize-none border-none outline-none font-mono text-base"
                 placeholder="Start writing your post in Markdown..."
-                style={{
-                  fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
-                }}
+                resize="none"
+                border="none"
+                outline="none"
+                h="full"
+                fontFamily="mono"
+                fontSize="sm"
+                color={textColor}
+                _focus={{ boxShadow: 'none' }}
+                _placeholder={{ color: mutedTextColor }}
               />
-            </div>
-            <div className="h-full overflow-auto border-l border-gray-200">
-              <div className="p-4 prose prose-sm max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {content || '*Start typing to see the preview...*'}
-                </ReactMarkdown>
-              </div>
-            </div>
-          </SplitPane>
-        ) : (
-          <div className="h-full p-2">
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={(e) => onContentChange(e.target.value)}
-              className="w-full h-full resize-none border-none outline-none font-mono text-base"
-              placeholder="Start writing your post in Markdown..."
-              style={{
-                fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
-              }}
-            />
-          </div>
-        )}
-      </div>
+            </Box>
+          )}
+        </Box>
+      </CardBody>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            {content.length} characters, {content.split(/\s+/).filter(Boolean).length} words
-          </div>
-        </div>
-      </div>
-    </div>
+      {/* Footer with Statistics */}
+      <CardFooter bg={toolbarBg} borderBottomRadius="xl" py={3}>
+        <Flex justify="space-between" align="center" w="full">
+          <HStack spacing={4}>
+            <Badge colorScheme="blue" variant="subtle">
+              {charCount.toLocaleString()} characters
+            </Badge>
+            <Badge colorScheme="green" variant="subtle">
+              {wordCount.toLocaleString()} words
+            </Badge>
+            <Badge colorScheme="purple" variant="subtle">
+              {readingTime} min read
+            </Badge>
+          </HStack>
+          
+          {isUploading && (
+            <Badge colorScheme="orange" variant="solid">
+              Uploading image...
+            </Badge>
+          )}
+        </Flex>
+      </CardFooter>
+    </Card>
   );
 }

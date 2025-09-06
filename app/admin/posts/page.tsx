@@ -4,24 +4,52 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { usePosts } from '@/hooks/usePosts';
-import { ChakraProvider, Grid, GridItem, Box, Flex, useToast } from '@chakra-ui/react';
+import { 
+  ChakraProvider, 
+  Grid, 
+  GridItem, 
+  Box, 
+  Flex, 
+  useToast,
+  Button,
+  HStack,
+  VStack,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
+  useColorModeValue,
+  Container
+} from '@chakra-ui/react';
 import { saintfestTheme } from '@/lib/chakra-theme';
+import { BarChart3, Plus, Settings } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
+// Dynamic imports for better performance
+const BlogDashboard = dynamic(() => import('@/components/admin/BlogDashboard'), { ssr: false });
+const AdvancedPostsTable = dynamic(() => import('@/components/admin/AdvancedPostsTable'), { ssr: false });
 const MarkdownEditor = dynamic(() => import('@/components/admin/MarkdownEditor'), { ssr: false });
-const PostsList = dynamic(() => import('@/components/admin/PostsList'), { ssr: false });
 const PostControlsSidebar = dynamic(() => import('@/components/admin/PostControlsSidebar'), { ssr: false });
 
 interface PostMetadata {
   title: string;
   slug: string;
-  status: 'draft' | 'published' | 'scheduled';
+  status: 'draft' | 'published' | 'scheduled' | 'archived';
   publishedAt?: Date;
   scheduledFor?: Date;
+  scheduledAt?: Date;
   excerpt?: string;
   tags: string[];
+  categories?: string[];
   featuredImage?: string;
+  featured?: boolean;
+  priority?: 'low' | 'medium' | 'high';
+  seoTitle?: string;
+  seoDescription?: string;
 }
+
+type ViewType = 'dashboard' | 'list' | 'editor';
 
 function PostsManagementPageContent() {
   const router = useRouter();
@@ -29,37 +57,57 @@ function PostsManagementPageContent() {
   const { savePost, uploadImage, getPost } = usePosts();
   const toast = useToast();
   
-  const [currentView, setCurrentView] = useState<'list' | 'editor'>('list');
+  const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [content, setContent] = useState<string>('');
   const [metadata, setMetadata] = useState<PostMetadata>({
     title: '',
     slug: '',
-    status: 'published',
+    status: 'draft',
     tags: [],
+    categories: [],
+    priority: 'medium',
+    featured: false,
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isManualSaving, setIsManualSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState<{
+    show: boolean;
+    message: string;
+    postId?: string;
+    status?: string;
+    timestamp?: Date;
+  }>({ show: false, message: '' });
+  
+  // UI Colors
+  const bgColor = useColorModeValue('#fffbeb', 'gray.900');
+  const headerBg = useColorModeValue('#8FBC8F', 'gray.800');
 
   // Auto-save functionality with debouncing
   useEffect(() => {
     const timer = setTimeout(() => {
-      if ((content.trim() || metadata.title) && currentView === 'editor') {
+      // Only auto-save if we have both title AND content (API requirements)
+      if (metadata.title.trim() && content.trim() && currentView === 'editor' && !isManualSaving) {
         handleAutoSave();
       }
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [content, metadata]);
+  }, [content, metadata, isManualSaving]);
 
   const handleAutoSave = useCallback(async () => {
-    if (!content.trim() && !metadata.title) return;
+    // Double-check we have both required fields before attempting save
+    if (!content.trim() || !metadata.title.trim()) return;
     
     try {
       setIsSaving(true);
-      await savePost(content, metadata, editingPostId || undefined);
-      setLastSaved(new Date());
+      const result = await savePost(content, metadata, editingPostId || undefined);
+      if (result) {
+        setLastSaved(new Date());
+        // Don't navigate during auto-save, only update last saved time
+      }
     } catch (error) {
       console.error('Auto-save failed:', error);
     } finally {
@@ -81,9 +129,15 @@ function PostsManagementPageContent() {
               status: post.status || 'draft',
               publishedAt: post.publishedAt,
               scheduledFor: post.scheduledFor,
+              scheduledAt: post.scheduledAt,
               excerpt: post.excerpt,
               tags: post.tags || [],
+              categories: post.categories || [],
               featuredImage: post.featuredImage,
+              featured: post.featured || false,
+              priority: post.priority || 'medium',
+              seoTitle: post.seoTitle,
+              seoDescription: post.seoDescription,
             });
           }
         } catch (error) {
@@ -95,8 +149,11 @@ function PostsManagementPageContent() {
         setMetadata({
           title: '',
           slug: '',
-          status: 'published',
+          status: 'draft',
           tags: [],
+          categories: [],
+          priority: 'medium',
+          featured: false,
         });
       }
     };
@@ -104,13 +161,35 @@ function PostsManagementPageContent() {
     loadPostForEditing();
   }, [editingPostId, currentView, getPost]);
 
+  // Auto-hide success message after 5 seconds
+  useEffect(() => {
+    if (saveSuccess.show) {
+      const timer = setTimeout(() => {
+        setSaveSuccess({ show: false, message: '' });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [saveSuccess.show]);
+
   const handleCreateNew = () => {
     setEditingPostId(null);
+    setContent('');
+    setMetadata({
+      title: '',
+      slug: '',
+      status: 'draft',
+      tags: [],
+      categories: [],
+      priority: 'medium',
+      featured: false,
+    });
+    setSaveSuccess({ show: false, message: '' });
     setCurrentView('editor');
   };
 
   const handleEditPost = (postId: string) => {
     setEditingPostId(postId);
+    setSaveSuccess({ show: false, message: '' });
     setCurrentView('editor');
   };
 
@@ -121,45 +200,109 @@ function PostsManagementPageContent() {
     setMetadata({
       title: '',
       slug: '',
-      status: 'published',
+      status: 'draft',
       tags: [],
+      categories: [],
+      priority: 'medium',
+      featured: false,
     });
+    setSaveSuccess({ show: false, message: '' });
+  };
+
+  const handleNavigateToDashboard = () => {
+    setCurrentView('dashboard');
+  };
+
+  const handleViewPost = (slug: string) => {
+    // Open published post in new tab
+    window.open(`/posts/${slug}`, '_blank');
   };
 
   const handleSavePost = async () => {
+    setIsManualSaving(true);
+    setIsSaving(true);
+
     try {
-      setIsSaving(true);
-      const result = await savePost(content, metadata, editingPostId || undefined);
-      if (result) {
-        setLastSaved(new Date());
-        
-        // Show success notification
-        toast({
-          title: 'Post saved successfully!',
-          description: `"${metadata.title}" has been saved as a ${metadata.status}.`,
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        });
-        
-        // Redirect back to list view after successful save
-        setTimeout(() => {
-          setCurrentView('list');
-        }, 1500); // Brief delay to show the success message
+      // Validate required fields - throw errors instead of early returns
+      if (!metadata.title.trim()) {
+        throw new Error('Please enter a title for your post.');
       }
-    } catch (error) {
-      console.error('Failed to save post:', error);
       
-      // Show error notification
+      if (!content.trim()) {
+        throw new Error('Please write some content for your post.');
+      }
+      
+      console.log('Attempting to save post:', { title: metadata.title, status: metadata.status });
+      
+      const result = await savePost(content, metadata, editingPostId || undefined);
+      
+      if (!result) {
+        throw new Error('Failed to save post - no result returned from server.');
+      }
+
+      console.log('Post saved successfully!');
+      
+      // Update last saved time
+      setLastSaved(new Date());
+      
+      // Set success state for in-place feedback
+      const actionMessage = metadata.status === 'published' ? 'published' : 
+                           metadata.status === 'scheduled' ? 'scheduled' : 
+                           metadata.status === 'archived' ? 'archived' : 'saved as draft';
+      
+      setSaveSuccess({
+        show: true,
+        message: `Post ${actionMessage} successfully!`,
+        postId: result.id,
+        status: metadata.status,
+        timestamp: new Date()
+      });
+      
+      // Also show toast for immediate feedback
       toast({
-        title: 'Save failed',
-        description: 'There was an error saving your post. Please try again.',
+        title: 'Post saved!',
+        description: `"${metadata.title}" has been ${actionMessage}.`,
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+      
+      // Keep user in editor - no clearing, no redirection
+      console.log('Save completed - staying in editor.');
+      
+    } catch (error) {
+      console.error('Save operation failed:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      // Provide specific guidance based on error type
+      let title = 'Save failed';
+      let description = errorMessage;
+      
+      if (errorMessage.includes('slug already exists') || errorMessage.includes('slug') && errorMessage.includes('taken')) {
+        title = 'Duplicate URL Slug';
+        description = `${errorMessage}. Please change the URL slug to something unique, or leave it empty to auto-generate one.`;
+      } else if (errorMessage.includes('Title and content are required')) {
+        title = 'Missing Required Fields';
+        description = 'Both title and content are required. Please fill in both fields before saving.';
+      } else if (errorMessage.includes('Validation failed')) {
+        title = 'Validation Error';
+        description = `${errorMessage}. Please check your post data and try again.`;
+      }
+      
+      // Show error notification with specific guidance
+      toast({
+        title,
+        description,
         status: 'error',
-        duration: 5000,
+        duration: 7000,
         isClosable: true,
       });
     } finally {
+      // Always reset loading states
+      console.log('Resetting loading states...');
       setIsSaving(false);
+      setIsManualSaving(false);
     }
   };
 
@@ -219,82 +362,147 @@ function PostsManagementPageContent() {
   }
 
   return (
-    <div className="min-h-screen" style={{backgroundColor: '#fffbeb'}}>
+    <Box minH="100vh" bg={bgColor}>
       {/* Header */}
-      <header style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 1000,
-        width: '100%',
-        backgroundColor: '#8FBC8F',
-        padding: '1rem 0',
-        marginBottom: '2rem',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
-      }}>
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1 style={{
-                fontSize: '2.5rem',
-                fontFamily: 'var(--font-sorts-mill)',
-                color: 'white',
-                fontWeight: '600',
-                textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-              }}>
-                Posts Management
-              </h1>
-              {currentView === 'editor' && (
-                <button
-                  onClick={handleBackToList}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: 'rgba(255,255,255,0.2)',
-                    color: 'white',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.875rem',
-                    fontFamily: 'var(--font-league-spartan)',
-                    cursor: 'pointer',
-                    fontWeight: '500'
-                  }}
+      <Box
+        position="sticky"
+        top={0}
+        zIndex={1000}
+        w="full"
+        bg={headerBg}
+        py={4}
+        mb={0}
+        shadow="sm"
+      >
+        <Container maxW="7xl">
+          <Flex justify="space-between" align="center">
+            <HStack spacing={4}>
+              <Box>
+                <Box
+                  fontSize="2xl"
+                  fontFamily="var(--font-sorts-mill)"
+                  color="white"
+                  fontWeight="600"
+                  textShadow="0 1px 2px rgba(0,0,0,0.1)"
                 >
-                  ← Back to Posts List
-                </button>
+                  Blog Management System
+                </Box>
+              </Box>
+              {currentView === 'editor' && (
+                <Button
+                  onClick={handleBackToList}
+                  variant="ghost"
+                  color="white"
+                  size="sm"
+                  fontFamily="var(--font-league-spartan)"
+                  _hover={{ bg: 'whiteAlpha.200' }}
+                >
+                  ← Back to Posts
+                </Button>
               )}
-            </div>
-            <nav style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-              <a href="/admin" style={{
-                fontSize: '0.875rem',
-                fontFamily: 'var(--font-league-spartan)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                color: 'white',
-                textDecoration: 'none',
-                fontWeight: '500',
-                padding: '0.5rem 1rem',
-                borderRadius: '0.25rem',
-                backgroundColor: 'rgba(255,255,255,0.1)'
-              }}>
+            </HStack>
+            
+            <HStack spacing={4}>
+              {currentView !== 'editor' && (
+                <Button
+                  leftIcon={<Plus size={16} />}
+                  onClick={handleCreateNew}
+                  bg="whiteAlpha.200"
+                  color="white"
+                  size="sm"
+                  _hover={{ bg: 'whiteAlpha.300' }}
+                >
+                  New Post
+                </Button>
+              )}
+              <Button
+                as="a"
+                href="/admin"
+                variant="ghost"
+                color="white"
+                size="sm"
+                fontFamily="var(--font-league-spartan)"
+                textTransform="uppercase"
+                letterSpacing="0.05em"
+                _hover={{ bg: 'whiteAlpha.200' }}
+              >
                 Admin Dashboard
-              </a>
-            </nav>
-          </div>
-        </div>
-      </header>
+              </Button>
+            </HStack>
+          </Flex>
+        </Container>
+      </Box>
 
       {/* Main Content */}
-      <Box maxW="7xl" mx="auto" px={4} pb={8}>
+      <Container maxW="7xl" py={8}>
+        {currentView === 'dashboard' && (
+          <VStack spacing={6} align="stretch">
+            {/* Navigation Tabs */}
+            <Tabs 
+              index={0}
+              onChange={(index) => {
+                if (index === 1) setCurrentView('list');
+                else if (index === 0) setCurrentView('dashboard');
+              }}
+            >
+              <TabList>
+                <Tab>
+                  <HStack spacing={2}>
+                    <BarChart3 size={16} />
+                    <span>Dashboard</span>
+                  </HStack>
+                </Tab>
+                <Tab>
+                  <HStack spacing={2}>
+                    <Settings size={16} />
+                    <span>Manage Posts</span>
+                  </HStack>
+                </Tab>
+              </TabList>
+            </Tabs>
+            <BlogDashboard 
+              onNavigateToEditor={handleCreateNew}
+              onNavigateToList={() => setCurrentView('list')}
+            />
+          </VStack>
+        )}
+
         {currentView === 'list' && (
-          <PostsList 
-            onCreateNew={handleCreateNew}
-            onEditPost={handleEditPost}
-          />
+          <VStack spacing={6} align="stretch">
+            {/* Navigation Tabs */}
+            <Tabs 
+              index={1}
+              onChange={(index) => {
+                if (index === 0) setCurrentView('dashboard');
+                else if (index === 1) setCurrentView('list');
+              }}
+            >
+              <TabList>
+                <Tab>
+                  <HStack spacing={2}>
+                    <BarChart3 size={16} />
+                    <span>Dashboard</span>
+                  </HStack>
+                </Tab>
+                <Tab>
+                  <HStack spacing={2}>
+                    <Settings size={16} />
+                    <span>Manage Posts</span>
+                  </HStack>
+                </Tab>
+              </TabList>
+            </Tabs>
+            <AdvancedPostsTable 
+              onCreateNew={handleCreateNew}
+              onEditPost={handleEditPost}
+            />
+          </VStack>
         )}
 
         {currentView === 'editor' && (
           <Grid
             templateColumns={{ base: '1fr', lg: '350px 1fr' }}
-            gap={6}
+            gap={8}
             h="full"
             alignItems="start"
           >
@@ -310,6 +518,10 @@ function PostsManagementPageContent() {
                   lastSaved={lastSaved || undefined}
                   wordCount={calculateStats().wordCount}
                   readingTime={calculateStats().readingTime}
+                  saveSuccess={saveSuccess}
+                  onCreateNew={handleCreateNew}
+                  onViewPost={handleViewPost}
+                  onDismissSuccess={() => setSaveSuccess({ show: false, message: '' })}
                 />
               </Box>
             </GridItem>
@@ -329,8 +541,8 @@ function PostsManagementPageContent() {
             </GridItem>
           </Grid>
         )}
-      </Box>
-    </div>
+      </Container>
+    </Box>
   );
 }
 

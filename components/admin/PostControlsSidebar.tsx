@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Box, VStack, Heading, HStack, Text, Flex, Badge } from '@chakra-ui/layout';
 import { FormControl, FormLabel } from '@chakra-ui/form-control';
 import { Input, InputGroup, InputLeftElement } from '@chakra-ui/input';
@@ -9,18 +9,24 @@ import { Textarea } from '@chakra-ui/textarea';
 import { Button } from '@chakra-ui/button';
 import { Tag, TagLabel, TagCloseButton } from '@chakra-ui/tag';
 import { Alert, AlertIcon, AlertDescription } from '@chakra-ui/alert';
-import { Divider, Switch } from '@chakra-ui/react';
-import { Calendar, Clock, Save, Eye, Upload, Tag as TagIcon } from 'lucide-react';
+import { Divider, Switch, useColorModeValue, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Spinner } from '@chakra-ui/react';
+import { Calendar, Clock, Save, Eye, Upload, Tag as TagIcon, Star, AlertTriangle, Search, Zap, CheckCircle, Plus, X } from 'lucide-react';
 
 interface PostMetadata {
   title: string;
   slug: string;
-  status: 'draft' | 'published' | 'scheduled';
+  status: 'draft' | 'published' | 'scheduled' | 'archived';
   publishedAt?: Date;
   scheduledFor?: Date;
+  scheduledAt?: Date;
   excerpt?: string;
   tags: string[];
+  categories?: string[];
   featuredImage?: string;
+  featured?: boolean;
+  priority?: 'low' | 'medium' | 'high';
+  seoTitle?: string;
+  seoDescription?: string;
 }
 
 interface PostControlsSidebarProps {
@@ -32,6 +38,16 @@ interface PostControlsSidebarProps {
   lastSaved?: Date;
   wordCount?: number;
   readingTime?: number;
+  saveSuccess?: {
+    show: boolean;
+    message: string;
+    postId?: string;
+    status?: string;
+    timestamp?: Date;
+  };
+  onCreateNew?: () => void;
+  onViewPost?: (slug: string) => void;
+  onDismissSuccess?: () => void;
 }
 
 export default function PostControlsSidebar({
@@ -43,8 +59,24 @@ export default function PostControlsSidebar({
   lastSaved,
   wordCount = 0,
   readingTime = 1,
+  saveSuccess,
+  onCreateNew,
+  onViewPost,
+  onDismissSuccess,
 }: PostControlsSidebarProps) {
   const [newTag, setNewTag] = useState('');
+  const [newCategory, setNewCategory] = useState('');
+  const [slugValidation, setSlugValidation] = useState<{
+    isChecking: boolean;
+    isAvailable?: boolean;
+    message?: string;
+  }>({ isChecking: false });
+  
+  const slugTimeoutRef = useRef<NodeJS.Timeout>();
+  
+  // Theme colors
+  const bgColor = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
 
   // Auto-generate slug from title
   const generateSlug = useCallback((title: string) => {
@@ -54,6 +86,36 @@ export default function PostControlsSidebar({
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .trim();
+  }, []);
+
+  // Check if slug is available
+  const checkSlugAvailability = useCallback(async (slug: string) => {
+    if (!slug.trim()) {
+      setSlugValidation({ isChecking: false });
+      return;
+    }
+
+    setSlugValidation({ isChecking: true });
+
+    try {
+      const response = await fetch(`/api/admin/posts?slug=${encodeURIComponent(slug)}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        const isDuplicate = result.posts && result.posts.length > 0;
+        setSlugValidation({
+          isChecking: false,
+          isAvailable: !isDuplicate,
+          message: isDuplicate ? 'This URL slug is already taken' : 'URL slug is available'
+        });
+      }
+    } catch (error) {
+      setSlugValidation({
+        isChecking: false,
+        isAvailable: undefined,
+        message: 'Unable to check slug availability'
+      });
+    }
   }, []);
 
   const handleTitleChange = (title: string) => {
@@ -66,7 +128,22 @@ export default function PostControlsSidebar({
   };
 
   const handleSlugChange = (slug: string) => {
-    onMetadataChange({ ...metadata, slug: slug.toLowerCase() });
+    const cleanSlug = slug.toLowerCase();
+    onMetadataChange({ ...metadata, slug: cleanSlug });
+    
+    // Clear existing timeout
+    if (slugTimeoutRef.current) {
+      clearTimeout(slugTimeoutRef.current);
+    }
+    
+    // Debounce slug validation check
+    slugTimeoutRef.current = setTimeout(() => {
+      if (cleanSlug) {
+        checkSlugAvailability(cleanSlug);
+      } else {
+        setSlugValidation({ isChecking: false });
+      }
+    }, 500);
   };
 
   const handleStatusChange = (status: string) => {
@@ -109,9 +186,67 @@ export default function PostControlsSidebar({
 
   const handleScheduledDateChange = (dateValue: string) => {
     const scheduledFor = dateValue ? new Date(dateValue) : undefined;
+    const scheduledAt = scheduledFor; // Use same date for both fields
     onMetadataChange({
       ...metadata,
       scheduledFor,
+      scheduledAt,
+    });
+  };
+
+  // Category handlers
+  const handleAddCategory = () => {
+    if (newCategory.trim() && !(metadata.categories || []).includes(newCategory.trim())) {
+      onMetadataChange({
+        ...metadata,
+        categories: [...(metadata.categories || []), newCategory.trim()],
+      });
+      setNewCategory('');
+    }
+  };
+
+  const handleRemoveCategory = (categoryToRemove: string) => {
+    onMetadataChange({
+      ...metadata,
+      categories: (metadata.categories || []).filter(category => category !== categoryToRemove),
+    });
+  };
+
+  const handleCategoryKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddCategory();
+    }
+  };
+
+  // Priority handler
+  const handlePriorityChange = (priority: string) => {
+    onMetadataChange({
+      ...metadata,
+      priority: priority as 'low' | 'medium' | 'high',
+    });
+  };
+
+  // Featured toggle handler
+  const handleFeaturedToggle = () => {
+    onMetadataChange({
+      ...metadata,
+      featured: !metadata.featured,
+    });
+  };
+
+  // SEO handlers
+  const handleSEOTitleChange = (seoTitle: string) => {
+    onMetadataChange({
+      ...metadata,
+      seoTitle,
+    });
+  };
+
+  const handleSEODescriptionChange = (seoDescription: string) => {
+    onMetadataChange({
+      ...metadata,
+      seoDescription,
     });
   };
 
@@ -173,11 +308,40 @@ export default function PostControlsSidebar({
               placeholder="post-url-slug"
               value={metadata.slug}
               onChange={(e) => handleSlugChange(e.target.value)}
+              borderColor={
+                slugValidation.isAvailable === false ? 'red.300' : 
+                slugValidation.isAvailable === true ? 'green.300' : 
+                borderColor
+              }
+              _focus={{
+                borderColor: slugValidation.isAvailable === false ? 'red.500' : 
+                           slugValidation.isAvailable === true ? 'green.500' : 
+                           'blue.500'
+              }}
             />
+            {slugValidation.isChecking && (
+              <InputGroup>
+                <Spinner size="sm" color="blue.500" position="absolute" right="8px" top="50%" transform="translateY(-50%)" />
+              </InputGroup>
+            )}
           </InputGroup>
-          <Text fontSize="xs" color="gray.500" mt={1}>
-            Auto-generated from title
-          </Text>
+          <HStack justify="space-between" mt={1}>
+            <Text fontSize="xs" color="gray.500">
+              Auto-generated from title
+            </Text>
+            {slugValidation.message && (
+              <Text 
+                fontSize="xs" 
+                color={
+                  slugValidation.isAvailable === false ? 'red.500' : 
+                  slugValidation.isAvailable === true ? 'green.500' : 
+                  'gray.500'
+                }
+              >
+                {slugValidation.message}
+              </Text>
+            )}
+          </HStack>
         </FormControl>
 
         {/* Post Status */}
@@ -190,6 +354,7 @@ export default function PostControlsSidebar({
             <option value="draft">Draft</option>
             <option value="published">Published</option>
             <option value="scheduled">Scheduled</option>
+            <option value="archived">Archived</option>
           </Select>
           
           {/* Scheduled Date Picker */}
@@ -248,6 +413,70 @@ export default function PostControlsSidebar({
           </VStack>
         </FormControl>
 
+        {/* Categories */}
+        <FormControl>
+          <FormLabel>Categories</FormLabel>
+          <VStack spacing={3} align="stretch">
+            <InputGroup>
+              <InputLeftElement>
+                <TagIcon size={14} />
+              </InputLeftElement>
+              <Input
+                placeholder="Add a category..."
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                onKeyPress={handleCategoryKeyPress}
+              />
+              <Button
+                ml={2}
+                size="sm"
+                onClick={handleAddCategory}
+                isDisabled={!newCategory.trim()}
+              >
+                Add
+              </Button>
+            </InputGroup>
+            
+            {(metadata.categories || []).length > 0 && (
+              <Flex wrap="wrap" gap={2}>
+                {(metadata.categories || []).map((category) => (
+                  <Tag key={category} size="md" variant="solid" colorScheme="blue">
+                    <TagLabel>{category}</TagLabel>
+                    <TagCloseButton onClick={() => handleRemoveCategory(category)} />
+                  </Tag>
+                ))}
+              </Flex>
+            )}
+          </VStack>
+        </FormControl>
+
+        {/* Priority and Featured Row */}
+        <HStack spacing={4} align="start">
+          <FormControl flex={1}>
+            <FormLabel>Priority</FormLabel>
+            <Select
+              value={metadata.priority || 'medium'}
+              onChange={(e) => handlePriorityChange(e.target.value)}
+            >
+              <option value="low">Low Priority</option>
+              <option value="medium">Medium Priority</option>
+              <option value="high">High Priority</option>
+            </Select>
+          </FormControl>
+          
+          <FormControl>
+            <FormLabel>Featured Post</FormLabel>
+            <HStack>
+              <Switch
+                isChecked={metadata.featured || false}
+                onChange={handleFeaturedToggle}
+                colorScheme="green"
+              />
+              <Star size={16} color={metadata.featured ? "#FFD700" : "#CBD5E0"} />
+            </HStack>
+          </FormControl>
+        </HStack>
+
         {/* Post Excerpt */}
         <FormControl>
           <FormLabel>Excerpt</FormLabel>
@@ -262,6 +491,50 @@ export default function PostControlsSidebar({
             Optional. Used for post previews and SEO.
           </Text>
         </FormControl>
+
+        <Divider />
+
+        {/* SEO Section */}
+        <Accordion allowToggle>
+          <AccordionItem>
+            <AccordionButton>
+              <HStack flex="1" textAlign="left">
+                <Search size={16} />
+                <Text fontWeight="semibold">SEO Settings</Text>
+              </HStack>
+              <AccordionIcon />
+            </AccordionButton>
+            <AccordionPanel pb={4}>
+              <VStack spacing={4} align="stretch">
+                <FormControl>
+                  <FormLabel>SEO Title</FormLabel>
+                  <Input
+                    placeholder={metadata.title || "Enter SEO title..."}
+                    value={metadata.seoTitle || ''}
+                    onChange={(e) => handleSEOTitleChange(e.target.value)}
+                  />
+                  <Text fontSize="xs" color="gray.500" mt={1}>
+                    {(metadata.seoTitle || metadata.title || '').length}/60 characters
+                  </Text>
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel>SEO Description</FormLabel>
+                  <Textarea
+                    placeholder={metadata.excerpt || "Enter SEO description..."}
+                    value={metadata.seoDescription || ''}
+                    onChange={(e) => handleSEODescriptionChange(e.target.value)}
+                    resize="vertical"
+                    minH="80px"
+                  />
+                  <Text fontSize="xs" color="gray.500" mt={1}>
+                    {(metadata.seoDescription || metadata.excerpt || '').length}/160 characters
+                  </Text>
+                </FormControl>
+              </VStack>
+            </AccordionPanel>
+          </AccordionItem>
+        </Accordion>
 
         <Divider />
 
@@ -298,32 +571,102 @@ export default function PostControlsSidebar({
           </Alert>
         )}
 
-        {/* Action Buttons */}
-        <VStack spacing={3}>
-          {metadata.status === 'published' && (
+        {/* Save Button Section - Completely Rebuilt */}
+        <VStack spacing={4} align="stretch">
+          {/* Success Status Display */}
+          {saveSuccess?.show && (
+            <Alert status="success" borderRadius="lg" variant="subtle">
+              <AlertIcon />
+              <Box flex="1">
+                <Text fontSize="sm" fontWeight="semibold" color="green.800">
+                  {saveSuccess.message}
+                </Text>
+                {saveSuccess.timestamp && (
+                  <Text fontSize="xs" color="green.600" mt={1}>
+                    {formatDate(saveSuccess.timestamp)}
+                  </Text>
+                )}
+              </Box>
+              {onDismissSuccess && (
+                <IconButton
+                  aria-label="Dismiss"
+                  icon={<X size={12} />}
+                  size="xs"
+                  variant="ghost"
+                  onClick={onDismissSuccess}
+                />
+              )}
+            </Alert>
+          )}
+
+          {/* Action Buttons Row */}
+          {saveSuccess?.show && saveSuccess.status === 'published' && metadata.slug && onViewPost ? (
+            <HStack spacing={2}>
+              <Button
+                flex={1}
+                leftIcon={<Eye size={14} />}
+                onClick={() => onViewPost(metadata.slug)}
+                variant="outline"
+                colorScheme="blue"
+                size="sm"
+              >
+                View Live Post
+              </Button>
+              {onCreateNew && (
+                <Button
+                  flex={1}
+                  leftIcon={<Plus size={14} />}
+                  onClick={onCreateNew}
+                  variant="outline"
+                  size="sm"
+                >
+                  New Post
+                </Button>
+              )}
+            </HStack>
+          ) : saveSuccess?.show && onCreateNew ? (
             <Button
+              leftIcon={<Plus size={14} />}
+              onClick={onCreateNew}
               variant="outline"
-              leftIcon={<Eye size={16} />}
               size="sm"
               w="full"
-              as="a"
-              href={`/posts/${metadata.slug}`}
-              target="_blank"
             >
-              Preview Post
+              Create New Post
             </Button>
-          )}
-          
+          ) : null}
+
+          {/* Main Save Button */}
           <Button
             leftIcon={<Save size={16} />}
             onClick={onSave}
             isLoading={isSaving}
             loadingText="Saving..."
-            w="full"
+            colorScheme="green"
             size="lg"
+            w="full"
+            isDisabled={!metadata.title?.trim()}
           >
-            Save Post
+            {metadata.status === 'published' ? 'Update & Publish' :
+             metadata.status === 'scheduled' ? 'Schedule Post' :
+             metadata.status === 'archived' ? 'Archive Post' :
+             'Save as Draft'}
           </Button>
+
+          {/* Preview Button for Published Posts */}
+          {metadata.status === 'published' && metadata.slug && (
+            <Button
+              leftIcon={<Eye size={14} />}
+              as="a"
+              href={`/posts/${metadata.slug}`}
+              target="_blank"
+              variant="ghost"
+              size="sm"
+              w="full"
+            >
+              Preview Published Post
+            </Button>
+          )}
         </VStack>
       </VStack>
     </Box>
