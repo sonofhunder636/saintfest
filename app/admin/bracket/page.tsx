@@ -9,7 +9,7 @@ import TournamentGenerator from '@/components/admin/TournamentGenerator';
 
 export default function BracketAdminPage() {
   const { currentUser, loading } = useRequireAuth('admin');
-  const [currentTournament, setCurrentTournament] = useState<Tournament | null>(null);
+  const [currentTournament, setCurrentTournament] = useState<Tournament | undefined>(undefined);
 
   const handleTournamentGenerated = (tournament: Tournament) => {
     setCurrentTournament(tournament);
