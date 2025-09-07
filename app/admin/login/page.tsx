@@ -7,8 +7,6 @@ import { AdminAuthProvider, useAdminAuth } from '@/contexts/AdminAuthContext';
 import Navigation from '@/components/Navigation';
 
 function AdminLoginContent() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const { signInWithGoogle, isAuthenticated, isAuthorizedAdmin, clearSession } = useAdminAuth();
@@ -116,104 +114,39 @@ function AdminLoginContent() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="username" style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontFamily: 'var(--font-league-spartan)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                color: '#374151',
-                fontWeight: '500',
-                marginBottom: '0.5rem'
-              }}>
-                Username
-              </label>
-              <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                style={{
-                  width: '100%',
-                  padding: '0.75rem 1rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  fontFamily: 'var(--font-cormorant)',
-                  fontSize: '1rem',
-                  backgroundColor: 'white'
-                }}
-                placeholder="Enter username"
-              />
-            </div>
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            style={{
+              width: '100%',
+              padding: '1rem 1.5rem',
+              backgroundColor: '#4285f4',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.375rem',
+              fontSize: '1rem',
+              fontFamily: 'var(--font-league-spartan)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontWeight: '600',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.7 : 1,
+              marginBottom: '1.5rem'
+            }}
+          >
+            {isLoading ? 'Authenticating...' : 'Sign In with Google'}
+          </button>
 
-            <div>
-              <label htmlFor="password" style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontFamily: 'var(--font-league-spartan)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                color: '#374151',
-                fontWeight: '500',
-                marginBottom: '0.5rem'
-              }}>
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                style={{
-                  width: '100%',
-                  padding: '0.75rem 1rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  fontFamily: 'var(--font-cormorant)',
-                  fontSize: '1rem',
-                  backgroundColor: 'white'
-                }}
-                placeholder="Enter password"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              style={{
-                width: '100%',
-                padding: '0.875rem 1.5rem',
-                backgroundColor: '#8FBC8F',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.375rem',
-                fontSize: '0.875rem',
-                fontFamily: 'var(--font-league-spartan)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                fontWeight: '600',
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                opacity: isLoading ? 0.7 : 1
-              }}
-            >
-              {isLoading ? 'Authenticating...' : 'Sign In'}
-            </button>
-
-            <div className="text-center mt-6">
-              <p style={{
-                fontFamily: 'var(--font-cormorant)',
-                fontSize: '0.875rem',
-                color: '#6b7280',
-                fontStyle: 'italic'
-              }}>
-                Administrative access requires proper authentication through secure channels.
-              </p>
-            </div>
-          </form>
+          <div className="text-center mt-6">
+            <p style={{
+              fontFamily: 'var(--font-cormorant)',
+              fontSize: '0.875rem',
+              color: '#6b7280',
+              fontStyle: 'italic'
+            }}>
+              Administrative access requires proper authentication through secure channels.
+            </p>
+          </div>
         </div>
       </main>
     </div>

@@ -222,15 +222,9 @@ export default function PostsPage() {
           console.error('Error fetching daily posts:', error);
         }
 
-        // Optionally publish scheduled posts (with error handling)
-        try {
-          await fetch('/api/admin/posts/publish-scheduled', {
-            method: 'POST'
-          });
-        } catch (error) {
-          // Silently continue if publishing fails - don't break the page
-          console.log('Scheduled publishing skipped:', error);
-        }
+        // Removed automatic scheduled publishing from page load
+        // Scheduled posts should only be published by server-side cron job or explicit trigger
+        // Not every time a user visits the posts page
 
         // Fetch blog posts (BlogPost system) - the posts saved via admin editor
         try {

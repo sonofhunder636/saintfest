@@ -3,28 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminAuthProvider, useAdminAuth } from '@/contexts/AdminAuthContext';
-import ImageManager from '@/components/admin/ImageManager';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ImageIcon, Users, Trophy, FileText } from 'lucide-react';
-import SaintImporter from '@/components/admin/SaintImporter';
-import SaintManager from '@/components/admin/SaintManager';
 
-// Sample data - in production this would come from your database
-const sampleSaints = [
-  { id: 'augustine', name: 'Augustine of Hippo', imageUrl: '', feastDay: 'August 28' },
-  { id: 'thomas-aquinas', name: 'Thomas Aquinas', imageUrl: '', feastDay: 'January 28' },
-  { id: 'teresa-avila', name: 'Teresa of Avila', imageUrl: '', feastDay: 'October 15' },
-  { id: 'francis-assisi', name: 'Francis of Assisi', imageUrl: '', feastDay: 'October 4' },
-  { id: 'joan-arc', name: 'Joan of Arc', imageUrl: '', feastDay: 'May 30' },
-  { id: 'anthony-padua', name: 'Anthony of Padua', imageUrl: '', feastDay: 'June 13' },
-  { id: 'catherine-siena', name: 'Catherine of Siena', imageUrl: '', feastDay: 'April 29' },
-  { id: 'ignatius-loyola', name: 'Ignatius of Loyola', imageUrl: '', feastDay: 'July 31' }
-];
 
 function AdminContent() {
   const { adminUser, loading } = useAdminAuth();
-  const [saints, setSaints] = useState(sampleSaints);
   const router = useRouter();
 
   // Redirect to login if not authenticated
@@ -47,16 +29,6 @@ function AdminContent() {
   if (!adminUser) {
     return null; // Will redirect above
   }
-
-  const handleUpdateSaintImage = (saintId: string, imageUrl: string) => {
-    setSaints(prev => 
-      prev.map(saint => 
-        saint.id === saintId 
-          ? { ...saint, imageUrl }
-          : saint
-      )
-    );
-  };
 
   return (
     <div className="min-h-screen" style={{backgroundColor: '#fffbeb'}}>
@@ -136,273 +108,77 @@ function AdminContent() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="space-y-6">
 
-          {/* Images Section */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div className="p-6 border-b border-gray-200">
-                <h2 style={{
-                  fontSize: '1.875rem',
-                  fontFamily: 'var(--font-sorts-mill)',
-                  color: '#111827',
+
+          {/* Admin Navigation Buttons */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 text-center hover:shadow-md transition-shadow">
+              <a 
+                href="/admin/saints/manager"
+                style={{
+                  display: 'inline-block',
+                  padding: '0.75rem 2rem',
+                  backgroundColor: '#8FBC8F',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontFamily: 'var(--font-league-spartan)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
                   fontWeight: '600',
-                  marginBottom: '0.5rem'
-                }}>
-                  Saint Image Management
-                </h2>
-                <p style={{
-                  fontFamily: 'var(--font-cormorant)',
-                  color: '#6b7280',
-                  fontSize: '1.125rem'
-                }}>
-                  Upload and manage images for your saints using public domain sources.
-                </p>
-              </div>
-              <div className="p-6">
-                <ImageManager 
-                  saints={saints}
-                  onUpdateSaintImage={handleUpdateSaintImage}
-                />
-              </div>
+                  transition: 'background-color 0.2s'
+                }}
+              >
+                Saint Database
+              </a>
             </div>
 
-          {/* Saints Section */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div className="p-6 border-b border-gray-200">
-                <h2 style={{
-                  fontSize: '1.875rem',
-                  fontFamily: 'var(--font-sorts-mill)',
-                  color: '#111827',
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 text-center hover:shadow-md transition-shadow">
+              <a 
+                href="/admin/bracket"
+                style={{
+                  display: 'inline-block',
+                  padding: '0.75rem 2rem',
+                  backgroundColor: '#8FBC8F',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontFamily: 'var(--font-league-spartan)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
                   fontWeight: '600',
-                  marginBottom: '0.5rem'
-                }}>
-                  Saint Database Management
-                </h2>
-                <p style={{
-                  fontFamily: 'var(--font-cormorant)',
-                  color: '#6b7280',
-                  fontSize: '1.125rem'
-                }}>
-                  Import and manage your saints database.
-                </p>
-              </div>
-              <div className="p-6 space-y-6">
-                <SaintImporter />
-                <SaintManager />
-              </div>
+                  transition: 'background-color 0.2s'
+                }}
+              >
+                Tournament Bracket
+              </a>
             </div>
 
-          {/* Tournaments Section */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div className="p-6 border-b border-gray-200">
-                <h2 style={{
-                  fontSize: '1.875rem',
-                  fontFamily: 'var(--font-sorts-mill)',
-                  color: '#111827',
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 text-center hover:shadow-md transition-shadow">
+              <a 
+                href="/admin/posts"
+                style={{
+                  display: 'inline-block',
+                  padding: '0.75rem 2rem',
+                  backgroundColor: '#8FBC8F',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontFamily: 'var(--font-league-spartan)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
                   fontWeight: '600',
-                  marginBottom: '0.5rem'
-                }}>
-                  Tournament Management
-                </h2>
-                <p style={{
-                  fontFamily: 'var(--font-cormorant)',
-                  color: '#6b7280',
-                  fontSize: '1.125rem'
-                }}>
-                  Create and manage March Madness style brackets
-                </p>
-              </div>
-              <div className="p-6 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white border border-gray-100 rounded-lg p-6">
-                    <Trophy className="h-8 w-8 text-blue-600 mb-3" />
-                    <h3 style={{
-                      fontFamily: 'var(--font-sorts-mill)',
-                      fontSize: '1.25rem',
-                      fontWeight: '600',
-                      color: '#111827',
-                      marginBottom: '0.5rem'
-                    }}>
-                      Generate New Bracket
-                    </h3>
-                    <p style={{
-                      fontFamily: 'var(--font-cormorant)',
-                      fontSize: '1rem',
-                      color: '#6b7280',
-                      marginBottom: '1rem'
-                    }}>
-                      Create a new tournament bracket with random saint selection from your chosen categories.
-                    </p>
-                    <a 
-                      href="/admin/bracket"
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        padding: '0.75rem 1.5rem',
-                        backgroundColor: '#8FBC8F',
-                        color: 'white',
-                        textAlign: 'center',
-                        textDecoration: 'none',
-                        borderRadius: '0.375rem',
-                        fontSize: '0.875rem',
-                        fontFamily: 'var(--font-league-spartan)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        fontWeight: '600'
-                      }}
-                    >
-                      Generate Bracket
-                    </a>
-                  </div>
-                  
-                  <div className="bg-white border border-gray-100 rounded-lg p-6">
-                    <Trophy className="h-8 w-8 text-green-600 mb-3" />
-                    <h3 style={{
-                      fontFamily: 'var(--font-sorts-mill)',
-                      fontSize: '1.25rem',
-                      fontWeight: '600',
-                      color: '#111827',
-                      marginBottom: '0.5rem'
-                    }}>
-                      View Brackets
-                    </h3>
-                    <p style={{
-                      fontFamily: 'var(--font-cormorant)',
-                      fontSize: '1rem',
-                      color: '#6b7280',
-                      marginBottom: '1rem'
-                    }}>
-                      View and manage existing tournament brackets and results.
-                    </p>
-                    <button style={{
-                      display: 'block',
-                      width: '100%',
-                      padding: '0.75rem 1.5rem',
-                      backgroundColor: 'white',
-                      color: '#8FBC8F',
-                      border: '1px solid #8FBC8F',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.875rem',
-                      fontFamily: 'var(--font-league-spartan)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      fontWeight: '600',
-                      cursor: 'pointer'
-                    }}>
-                      View All Brackets
-                    </button>
-                  </div>
-                </div>
-              </div>
+                  transition: 'background-color 0.2s'
+                }}
+              >
+                Posts Management
+              </a>
             </div>
+          </div>
 
-          {/* Posts Section */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div className="p-6 border-b border-gray-200">
-                <h2 style={{
-                  fontSize: '1.875rem',
-                  fontFamily: 'var(--font-sorts-mill)',
-                  color: '#111827',
-                  fontWeight: '600',
-                  marginBottom: '0.5rem'
-                }}>
-                  Daily Post Management
-                </h2>
-                <p style={{
-                  fontFamily: 'var(--font-cormorant)',
-                  color: '#6b7280',
-                  fontSize: '1.125rem'
-                }}>
-                  Create and manage daily voting posts for the tournament.
-                </p>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white border border-gray-100 rounded-lg p-6">
-                      <FileText className="h-8 w-8 text-blue-600 mb-3" />
-                      <h3 style={{
-                        fontFamily: 'var(--font-sorts-mill)',
-                        fontSize: '1.25rem',
-                        fontWeight: '600',
-                        color: '#111827',
-                        marginBottom: '0.5rem'
-                      }}>
-                        Create New Post
-                      </h3>
-                      <p style={{
-                        fontFamily: 'var(--font-cormorant)',
-                        fontSize: '1rem',
-                        color: '#6b7280',
-                        marginBottom: '1rem'
-                      }}>
-                        Create a new daily matchup post with saint information and voting widget.
-                      </p>
-                      <a 
-                        href="/admin/posts/create"
-                        style={{
-                          display: 'block',
-                          width: '100%',
-                          padding: '0.75rem 1.5rem',
-                          backgroundColor: '#8FBC8F',
-                          color: 'white',
-                          textAlign: 'center',
-                          textDecoration: 'none',
-                          borderRadius: '0.375rem',
-                          fontSize: '0.875rem',
-                          fontFamily: 'var(--font-league-spartan)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          fontWeight: '600'
-                        }}
-                      >
-                        Create Post
-                      </a>
-                    </div>
-                    
-                    <div className="bg-white border border-gray-100 rounded-lg p-6">
-                      <FileText className="h-8 w-8 text-green-600 mb-3" />
-                      <h3 style={{
-                        fontFamily: 'var(--font-sorts-mill)',
-                        fontSize: '1.25rem',
-                        fontWeight: '600',
-                        color: '#111827',
-                        marginBottom: '0.5rem'
-                      }}>
-                        Manage Posts
-                      </h3>
-                      <p style={{
-                        fontFamily: 'var(--font-cormorant)',
-                        fontSize: '1rem',
-                        color: '#6b7280',
-                        marginBottom: '1rem'
-                      }}>
-                        Edit existing posts, view voting results, and manage scheduling.
-                      </p>
-                      <a 
-                        href="/admin/posts"
-                        style={{
-                          display: 'block',
-                          width: '100%',
-                          padding: '0.75rem 1.5rem',
-                          backgroundColor: 'white',
-                          color: '#8FBC8F',
-                          border: '1px solid #8FBC8F',
-                          textAlign: 'center',
-                          textDecoration: 'none',
-                          borderRadius: '0.375rem',
-                          fontSize: '0.875rem',
-                          fontFamily: 'var(--font-league-spartan)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          fontWeight: '600'
-                        }}
-                      >
-                        Manage Posts
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
         </div>
       </main>
     </div>
