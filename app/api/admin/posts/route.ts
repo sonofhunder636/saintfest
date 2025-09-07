@@ -173,15 +173,23 @@ export async function POST(request: NextRequest) {
 
     // Check if slug already exists
     console.log('Checking slug uniqueness:', { finalSlug });
-    const slugQuery = query(collection(db, 'posts'), where('slug', '==', finalSlug));
-    const slugSnapshot = await getDocs(slugQuery);
-    
-    if (!slugSnapshot.empty) {
-      console.log('Slug validation failed: Duplicate slug found', { finalSlug });
-      return NextResponse.json(
-        { success: false, error: 'A post with this slug already exists' },
-        { status: 400 }
-      );
+    try {
+      const slugQuery = query(collection(db, 'posts'), where('slug', '==', finalSlug));
+      const slugSnapshot = await getDocs(slugQuery);
+      
+      if (!slugSnapshot.empty) {
+        console.log('Slug validation failed: Duplicate slug found', { finalSlug });
+        return NextResponse.json(
+          { success: false, error: 'A post with this slug already exists' },
+          { status: 400 }
+        );
+      }
+    } catch (slugError: any) {
+      // Handle Firestore collection not existing yet
+      console.log('Slug check failed (collection may not exist yet):', slugError.code);
+      if (slugError.code !== 'not-found' && slugError.code !== 'failed-precondition') {
+        throw slugError; // Re-throw if it's a real error
+      }
     }
 
     // Calculate metadata
@@ -228,28 +236,43 @@ export async function POST(request: NextRequest) {
       ...(scheduledAt && { scheduledAt: new Date(scheduledAt) })
     };
 
+    console.log('Creating post with data:', { 
+      title: postData.title, 
+      slug: postData.slug, 
+      status: postData.status,
+      hasScheduledFor: !!postData.scheduledFor,
+      hasScheduledAt: !!postData.scheduledAt
+    });
+
     const docRef = await addDoc(collection(db, 'posts'), postData);
+    console.log('Post created successfully with ID:', docRef.id);
     
-    // Create response with properly serialized dates
+    // Create response with safely serialized dates
     const responsePost = {
       id: docRef.id,
       ...postData,
       createdAt: postData.createdAt.toISOString(),
       updatedAt: postData.updatedAt.toISOString(),
-      publishedAt: postData.publishedAt?.toISOString(),
-      scheduledFor: postData.scheduledFor?.toISOString(),
-      scheduledAt: postData.scheduledAt?.toISOString()
+      publishedAt: postData.publishedAt ? postData.publishedAt.toISOString() : undefined,
+      scheduledFor: postData.scheduledFor ? postData.scheduledFor.toISOString() : undefined,
+      scheduledAt: postData.scheduledAt ? postData.scheduledAt.toISOString() : undefined
     };
     
+    console.log('Returning successful response with post ID:', responsePost.id);
     return NextResponse.json({
       success: true,
       post: responsePost
     });
 
-  } catch (error) {
-    console.error('Error creating post:', error);
+  } catch (error: any) {
+    console.error('Error creating post - Full error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+      name: error.name
+    });
     return NextResponse.json(
-      { success: false, error: 'Failed to create post' },
+      { success: false, error: error.message || 'Failed to create post' },
       { status: 500 }
     );
   }

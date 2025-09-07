@@ -26,6 +26,7 @@ export async function GET(
       updatedAt: docSnap.data()?.updatedAt?.toDate(),
       publishedAt: docSnap.data()?.publishedAt?.toDate(),
       scheduledFor: docSnap.data()?.scheduledFor?.toDate(),
+      scheduledAt: docSnap.data()?.scheduledAt?.toDate(),
     } as BlogPost;
 
     return NextResponse.json({
@@ -49,12 +50,47 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const { title, slug, content, status, tags = [], excerpt, featuredImage, scheduledFor } = body;
+    console.log('PUT /api/admin/posts/[id] - Received body for ID:', params.id, JSON.stringify(body, null, 2));
+    
+    const { 
+      title, 
+      slug, 
+      content, 
+      status, 
+      tags = [], 
+      categories = [],
+      excerpt, 
+      featuredImage, 
+      scheduledFor,
+      scheduledAt,
+      featured,
+      priority,
+      seoTitle,
+      seoDescription
+    } = body;
+
+    // Validate that we have at least title or content for updates
+    if (title !== undefined && (!title || title.trim() === '')) {
+      console.log('Validation failed: Empty title provided');
+      return NextResponse.json(
+        { success: false, error: 'Title cannot be empty' },
+        { status: 400 }
+      );
+    }
+
+    if (content !== undefined && (!content || content.trim() === '')) {
+      console.log('Validation failed: Empty content provided');
+      return NextResponse.json(
+        { success: false, error: 'Content cannot be empty' },
+        { status: 400 }
+      );
+    }
 
     const docRef = doc(db, 'posts', params.id);
     const docSnap = await getDoc(docRef);
     
     if (!docSnap.exists()) {
+      console.log('Post not found for ID:', params.id);
       return NextResponse.json(
         { success: false, error: 'Post not found' },
         { status: 404 }
@@ -77,10 +113,20 @@ export async function PUT(
       ...(content !== undefined && { content }),
       ...(status !== undefined && { status }),
       ...(tags !== undefined && { tags: Array.isArray(tags) ? tags : [] }),
+      ...(categories !== undefined && { categories: Array.isArray(categories) ? categories : [] }),
       ...(excerpt !== undefined && { excerpt }),
       ...(featuredImage !== undefined && { featuredImage }),
       ...(scheduledFor !== undefined && { scheduledFor: scheduledFor ? new Date(scheduledFor) : undefined }),
+      ...(scheduledAt !== undefined && { scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined }),
+      ...(featured !== undefined && { featured: Boolean(featured) }),
+      ...(priority !== undefined && { priority: (priority as 'low' | 'medium' | 'high') || 'medium' }),
+      ...(seoTitle !== undefined && { seoTitle: seoTitle || title }),
+      ...(seoDescription !== undefined && { seoDescription: seoDescription || excerpt }),
       updatedAt: new Date(),
+      readTime,
+      wordCount,
+      images,
+      // Legacy metadata for backward compatibility
       metadata: {
         ...docSnap.data()?.metadata,
         readTime,
@@ -94,7 +140,17 @@ export async function PUT(
       updateData.publishedAt = new Date();
     }
 
+    console.log('Updating post with data:', { 
+      id: params.id, 
+      title: updateData.title, 
+      slug: updateData.slug, 
+      status: updateData.status,
+      hasScheduledFor: !!updateData.scheduledFor,
+      hasScheduledAt: !!updateData.scheduledAt
+    });
+
     await updateDoc(docRef, updateData);
+    console.log('Post updated successfully:', params.id);
     
     // Get updated document
     const updatedDoc = await getDoc(docRef);
@@ -105,17 +161,25 @@ export async function PUT(
       updatedAt: updatedDoc.data()?.updatedAt?.toDate(),
       publishedAt: updatedDoc.data()?.publishedAt?.toDate(),
       scheduledFor: updatedDoc.data()?.scheduledFor?.toDate(),
+      scheduledAt: updatedDoc.data()?.scheduledAt?.toDate(),
     } as BlogPost;
 
+    console.log('Returning updated post:', post.id);
     return NextResponse.json({
       success: true,
       post
     });
 
-  } catch (error) {
-    console.error('Error updating post:', error);
+  } catch (error: any) {
+    console.error('Error updating post - Full error details:', {
+      postId: params?.id,
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+      name: error.name
+    });
     return NextResponse.json(
-      { success: false, error: 'Failed to update post' },
+      { success: false, error: error.message || 'Failed to update post' },
       { status: 500 }
     );
   }
