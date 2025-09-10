@@ -153,8 +153,8 @@ function TournamentHeader({
   const textColor = useColorModeValue('gray.800', 'gray.100');
   
   return (
-    <Box w="full" display="flex" justifyContent="center" py={6}>
-      <Box width={`${bracketWidth}px`} textAlign="center">
+    <Box w="full" display="flex" justifyContent="center" py={0}>
+      <Box textAlign="center">
         <VStack spacing={3}>
           <Text 
             fontSize="4xl" 
@@ -165,12 +165,6 @@ function TournamentHeader({
           >
             {tournament.title}
           </Text>
-          
-          <Box 
-            w="24" 
-            h="1" 
-            bgGradient={`linear(to-r, transparent, ${tournament.colorPalette.primary}, transparent)`} 
-          />
           
           {tournament.status === 'active' && (
             <Badge colorScheme="green" fontSize="sm" px={3} py={1}>
@@ -312,20 +306,6 @@ function MatchDisplay({
           )}
         </VStack>
       </Box>
-      
-      {/* Match Info Badge */}
-      {match.roundNumber === 1 && (
-        <Badge
-          position="absolute"
-          top="-8px"
-          right="-8px"
-          colorScheme="blue"
-          fontSize="xs"
-          borderRadius="full"
-        >
-          {match.matchNumber}
-        </Badge>
-      )}
     </Box>
   );
 }
@@ -392,10 +372,6 @@ function SaintMatchupDisplay({
           >
             {saint.displayName}
           </Text>
-          
-          {saint.seed && saint.seed <= 4 && (
-            <Star size={12} color={tournament.colorPalette.secondary} />
-          )}
         </HStack>
         
         {totalVotes > 0 && (

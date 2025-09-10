@@ -276,17 +276,17 @@ export class TournamentLayoutEngine {
         const match2CenterY = match2.position.y + (match2.position.height / 2);
         const pairCenterY = (match1CenterY + match2CenterY) / 2;
         
+        // Determine which side this match is on
+        const isLeftSide = match1.isLeftSide ?? true;
+        
         // Position new match at the center, adjusted for match height
         let matchY = pairCenterY - (matchDimensions.height / 2);
         
-        // Apply Round 4 vertical offsets
+        // Apply Round 4 vertical offsets to bracket positioning to align with offset horizontal lines
         if (roundNumber === 4) {
-          const offset = match1.isLeftSide ? LAYOUT_CONSTANTS.ROUND_4_OFFSET.LEFT_SIDE : LAYOUT_CONSTANTS.ROUND_4_OFFSET.RIGHT_SIDE;
+          const offset = isLeftSide ? LAYOUT_CONSTANTS.ROUND_4_OFFSET.LEFT_SIDE : LAYOUT_CONSTANTS.ROUND_4_OFFSET.RIGHT_SIDE;
           matchY += offset;
         }
-        
-        // Determine which side this match is on
-        const isLeftSide = match1.isLeftSide;
         const matchNumber = Math.floor(i / 2) + 1;
         
         // Calculate correct X position based on side
@@ -349,22 +349,32 @@ export class TournamentLayoutEngine {
           : round1RightX - connectionOffset - matchDimensions.width;
       
       case 3:
-        // Position inward from Round 2
+        // Position inward from Round 2, aligned with vertical lines
         const round2LeftX = this.calculateRoundXPositionForSide(2, matchDimensions, totalWidth, true);
         const round2RightX = this.calculateRoundXPositionForSide(2, matchDimensions, totalWidth, false);
         
+        // Position so that horizontal lines (which subtract SHORT_APPROACH_DISTANCE) end up at the right distance from junctions
+        // Junction is at: round2X + matchWidth + JUNCTION_LENGTH
+        // Horizontal line goes to: Round3Position - SHORT_APPROACH_DISTANCE
+        // We want: Round3Position - SHORT_APPROACH_DISTANCE = junction + CONNECTION_LENGTH
+        // So: Round3Position = junction + CONNECTION_LENGTH + SHORT_APPROACH_DISTANCE
+        const fullConnectionLength = LAYOUT_CONSTANTS.CONNECTION_LENGTH + LAYOUT_CONSTANTS.SHORT_APPROACH_DISTANCE;
+        
         return isLeftSide 
-          ? round2LeftX + matchDimensions.width + LAYOUT_CONSTANTS.ROUND_SPACING
-          : round2RightX - LAYOUT_CONSTANTS.ROUND_SPACING - matchDimensions.width;
+          ? round2LeftX + matchDimensions.width + LAYOUT_CONSTANTS.JUNCTION_LENGTH + fullConnectionLength - LAYOUT_CONSTANTS.SHORT_APPROACH_DISTANCE
+          : round2RightX - LAYOUT_CONSTANTS.JUNCTION_LENGTH - fullConnectionLength + LAYOUT_CONSTANTS.SHORT_APPROACH_DISTANCE;
       
       case 4:
-        // Final round - position inward from Round 3 (BRACKET TERMINATES HERE)
+        // Final round - simple connection-based positioning
         const round3LeftX = this.calculateRoundXPositionForSide(3, matchDimensions, totalWidth, true);
         const round3RightX = this.calculateRoundXPositionForSide(3, matchDimensions, totalWidth, false);
         
+        // Simple alignment with Round 3 connections (same pattern as other rounds)
+        const round4ConnectionOffset = LAYOUT_CONSTANTS.JUNCTION_LENGTH + LAYOUT_CONSTANTS.CONNECTION_LENGTH;
+        
         return isLeftSide 
-          ? round3LeftX + matchDimensions.width + LAYOUT_CONSTANTS.ROUND_SPACING
-          : round3RightX - LAYOUT_CONSTANTS.ROUND_SPACING - matchDimensions.width;
+          ? round3LeftX + matchDimensions.width + round4ConnectionOffset
+          : round3RightX - round4ConnectionOffset - matchDimensions.width;
       
       default:
         return centerX;
@@ -375,23 +385,18 @@ export class TournamentLayoutEngine {
    * Calculate total bracket width for 4 rounds (no championship)
    */
   private calculateFullBracketWidth(matchDimensions: { width: number; height: number }): number {
-    return LAYOUT_CONSTANTS.MARGIN_LEFT + 
-           matchDimensions.width + // Round 1 left
-           LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 2
-           matchDimensions.width + // Round 2 left
-           LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 3
-           matchDimensions.width + // Round 3 left
-           LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 4
-           matchDimensions.width + // Round 4 left
-           LAYOUT_CONSTANTS.ROUND_SPACING + // Space between sides (minimum)
-           matchDimensions.width + // Round 4 right
-           LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 3 right
-           matchDimensions.width + // Round 3 right
-           LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 2 right
-           matchDimensions.width + // Round 2 right
-           LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 1 right
-           matchDimensions.width + // Round 1 right
-           LAYOUT_CONSTANTS.MARGIN_RIGHT;
+    // Convergent layout: single progression to center, then mirror without additional spacing
+    const singleSideWidth = LAYOUT_CONSTANTS.MARGIN_LEFT + 
+                            matchDimensions.width + // Round 1
+                            LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 2
+                            matchDimensions.width + // Round 2
+                            LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 3
+                            matchDimensions.width + // Round 3
+                            LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 4
+                            matchDimensions.width; // Round 4
+    
+    // Total width: left side + right side (no additional spacing between Round 4s)
+    return singleSideWidth + matchDimensions.width + LAYOUT_CONSTANTS.MARGIN_RIGHT;
   }
 
 
@@ -452,6 +457,7 @@ export class TournamentLayoutEngine {
         const match1CenterY = match1.position.y + (match1.position.height / 2);
         const match2CenterY = match2.position.y + (match2.position.height / 2);
         const nextMatchCenterY = nextMatch.position.y + (nextMatch.position.height / 2);
+        const verticalLineCenterY = (match1CenterY + match2CenterY) / 2;
         
         if (isLeftSide) {
           // Left side: lines extend to the right
@@ -492,18 +498,23 @@ export class TournamentLayoutEngine {
             strokeWidth: LAYOUT_CONSTANTS.LINE_THICKNESS
           });
           
-          // Horizontal line to next round match (short approach for Rounds 2→3 and 3→4)
-          const leftEndX = (roundNumber >= 2) 
-            ? nextMatchEntryX - LAYOUT_CONSTANTS.SHORT_APPROACH_DISTANCE 
-            : nextMatchEntryX;
+          // Horizontal line to next round match - connect directly to bracket slots
+          const leftEndX = nextMatchEntryX;
+          
+          // Apply Round 4 vertical offset to horizontal lines (and therefore to brackets)
+          let horizontalLineY = verticalLineCenterY;
+          if (roundNumber === 3) { // Round 3→4 connections
+            const offset = isLeftSide ? LAYOUT_CONSTANTS.ROUND_4_OFFSET.LEFT_SIDE : LAYOUT_CONSTANTS.ROUND_4_OFFSET.RIGHT_SIDE;
+            horizontalLineY += offset;
+          }
           
           connections.push({
             id: `R${roundNumber}-pair-${Math.floor(i/2)+1}-to-next`,
             type: 'horizontal',
             x1: junctionX,
-            y1: nextMatchCenterY,
+            y1: horizontalLineY,
             x2: leftEndX,
-            y2: nextMatchCenterY,
+            y2: horizontalLineY,
             strokeWidth: LAYOUT_CONSTANTS.LINE_THICKNESS
           });
         } else {
@@ -545,18 +556,23 @@ export class TournamentLayoutEngine {
             strokeWidth: LAYOUT_CONSTANTS.LINE_THICKNESS
           });
           
-          // Horizontal line to next round match (short approach for Rounds 2→3 and 3→4)
-          const rightEndX = (roundNumber >= 2) 
-            ? nextMatchEntryX + LAYOUT_CONSTANTS.SHORT_APPROACH_DISTANCE 
-            : nextMatchEntryX;
+          // Horizontal line to next round match - connect directly to bracket slots
+          const rightEndX = nextMatchEntryX;
+          
+          // Apply Round 4 vertical offset to horizontal lines (and therefore to brackets)
+          let horizontalLineY = verticalLineCenterY;
+          if (roundNumber === 3) { // Round 3→4 connections
+            const offset = isLeftSide ? LAYOUT_CONSTANTS.ROUND_4_OFFSET.LEFT_SIDE : LAYOUT_CONSTANTS.ROUND_4_OFFSET.RIGHT_SIDE;
+            horizontalLineY += offset;
+          }
           
           connections.push({
             id: `R${roundNumber}-pair-${Math.floor(i/2)+1}-to-next`,
             type: 'horizontal',
             x1: junctionX,
-            y1: nextMatchCenterY,
+            y1: horizontalLineY,
             x2: rightEndX,
-            y2: nextMatchCenterY,
+            y2: horizontalLineY,
             strokeWidth: LAYOUT_CONSTANTS.LINE_THICKNESS
           });
         }
