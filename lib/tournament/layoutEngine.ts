@@ -18,7 +18,7 @@ const LAYOUT_CONSTANTS = {
   TITLE_HEIGHT: 60, // Space for title at top
   
   // Margins
-  MARGIN_LEFT: 40,
+  MARGIN_LEFT: 200, // Increased for 100px category labels
   MARGIN_RIGHT: 40,
   MARGIN_TOP: 40,
   MARGIN_BOTTOM: 40,
@@ -45,6 +45,12 @@ const LAYOUT_CONSTANTS = {
   
   // Center spacing
   CENTER_GAP: 600, // Gap for visual separation and connections
+  
+  // Category label space
+  CATEGORY_LABEL_SPACE: 150, // Dedicated horizontal space for rotated category labels
+  
+  // Round positioning
+  ROUND_1_OFFSET: 100, // Additional right shift for Round 1 bracket slots
   
   // Text styling
   FONT_FAMILY: 'var(--font-sorts-mill)',
@@ -332,8 +338,8 @@ export class TournamentLayoutEngine {
     const matches: TournamentMatch[] = [];
     let matchNumber = 1;
     
-    // Only generate left side matches
-    const leftSideX = LAYOUT_CONSTANTS.MARGIN_LEFT;
+    // Only generate left side matches (with additional right offset)
+    const leftSideX = LAYOUT_CONSTANTS.MARGIN_LEFT + LAYOUT_CONSTANTS.ROUND_1_OFFSET;
     
     // Calculate vertical spacing - distribute 8 matches evenly on left side
     const totalHeight = this.calculateTotalBracketHeight();
@@ -465,8 +471,8 @@ export class TournamentLayoutEngine {
         return isLeftSide ? LAYOUT_CONSTANTS.MARGIN_LEFT : totalWidth - LAYOUT_CONSTANTS.MARGIN_RIGHT - matchDimensions.width;
       
       case 2:
-        // Position inward from Round 1
-        const round1LeftX = LAYOUT_CONSTANTS.MARGIN_LEFT;
+        // Position inward from Round 1 (account for Round 1 offset)
+        const round1LeftX = LAYOUT_CONSTANTS.MARGIN_LEFT + LAYOUT_CONSTANTS.ROUND_1_OFFSET;
         const round1RightX = totalWidth - LAYOUT_CONSTANTS.MARGIN_RIGHT - matchDimensions.width;
         const connectionOffset = LAYOUT_CONSTANTS.JUNCTION_LENGTH + LAYOUT_CONSTANTS.CONNECTION_LENGTH;
         
@@ -521,8 +527,8 @@ export class TournamentLayoutEngine {
                             LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 4
                             matchDimensions.width; // Round 4
     
-    // Total width: left side + center gap (after horizontal lines) + right side
-    return singleSideWidth + LAYOUT_CONSTANTS.CENTER_GAP + matchDimensions.width + LAYOUT_CONSTANTS.MARGIN_RIGHT;
+    // Total width: category label space + left side + center gap + right side
+    return LAYOUT_CONSTANTS.CATEGORY_LABEL_SPACE + singleSideWidth + LAYOUT_CONSTANTS.CENTER_GAP + matchDimensions.width + LAYOUT_CONSTANTS.MARGIN_RIGHT;
   }
 
 

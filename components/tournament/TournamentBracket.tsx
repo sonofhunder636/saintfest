@@ -131,6 +131,56 @@ export default function TournamentBracket({
             />
           ))}
           
+          {/* Category Label for Matches 1-4 */}
+          {(() => {
+            // Find matches 1-4 (Round 1, left side, first category)
+            const matches1to4 = layoutData.matches.filter(
+              match => match.roundNumber === 1 && 
+                      match.isLeftSide === true && 
+                      match.matchNumber >= 1 && 
+                      match.matchNumber <= 4
+            );
+            
+            if (matches1to4.length === 0) return null;
+            
+            // Get category from first match's categoryAffiliation
+            const categoryId = matches1to4[0].categoryAffiliation;
+            const category = tournament.categories.find(cat => cat.id === categoryId);
+            
+            if (!category) return null;
+            
+            // Calculate vertical center of matches 1-4
+            const minY = Math.min(...matches1to4.map(m => m.position.y));
+            const maxY = Math.max(...matches1to4.map(m => m.position.y + m.position.height));
+            const centerY = (minY + maxY) / 2;
+            
+            // Position at absolute left edge of container
+            const labelX = 0; // Fixed position at absolute left edge
+            
+            return (
+              <Box
+                position="absolute"
+                left={`${labelX}px`}
+                top={`${centerY}px`}
+                transform="rotate(-90deg)"
+                transformOrigin="center"
+                zIndex={10}
+                pointerEvents="none"
+              >
+                <Text
+                  fontSize="100px"
+                  fontWeight="600"
+                  color={category.color}
+                  fontFamily="var(--font-sorts-mill)"
+                  textShadow="0 1px 2px rgba(0,0,0,0.1)"
+                  whiteSpace="nowrap"
+                >
+                  {category.name}
+                </Text>
+              </Box>
+            );
+          })()}
+          
           {/* Tournament Title - 700px above center */}
           <Box
             position="absolute"
