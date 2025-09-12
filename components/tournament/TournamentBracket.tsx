@@ -102,9 +102,6 @@ export default function TournamentBracket({
 
   return (
     <Box w="full" bg={bgColor}>
-      {/* Tournament Title - Outside scrollable area */}
-      <TournamentHeader tournament={tournament} bracketWidth={layoutData.layout.totalWidth} />
-
       {/* Scrollable Bracket Container */}
       <Box w="full" overflow="auto">
         <Box position="relative" mx="auto" p={4}>
@@ -134,6 +131,72 @@ export default function TournamentBracket({
             />
           ))}
           
+          {/* Tournament Title - 700px above center */}
+          <Box
+            position="absolute"
+            top="50%"
+            left="50%"
+            transform="translate(-50%, -50%)"
+            marginTop="-700px"
+            zIndex={15}
+            pointerEvents="none"
+            textAlign="center"
+          >
+            <Text 
+              fontSize="8xl" 
+              fontWeight="600" 
+              color={textColor}
+              fontFamily="var(--font-sorts-mill)"
+              textShadow="0 1px 2px rgba(0,0,0,0.1)"
+            >
+              {tournament.title}
+            </Text>
+            
+            {tournament.status === 'active' && (
+              <Badge colorScheme="green" fontSize="sm" px={3} py={1} mt={1}>
+                Tournament Active
+              </Badge>
+            )}
+          </Box>
+
+          {/* Overlay Text - Blessed Intercessor at precise bracket center */}
+          <Box
+            position="absolute"
+            top="50%"
+            left="50%"
+            transform="translate(-50%, -50%)"
+            zIndex={15}
+            pointerEvents="none"
+            textAlign="center"
+          >
+            <VStack spacing={-2}>
+              <Text
+                fontSize="6xl"
+                fontWeight="700"
+                fontFamily="var(--font-sorts-mill)"
+                color="rgba(139, 69, 19, 0.15)"
+                textShadow="0 2px 4px rgba(0,0,0,0.1)"
+                letterSpacing="0.05em"
+                userSelect="none"
+                lineHeight="0.9"
+              >
+                Blessed
+              </Text>
+              <Text
+                fontSize="6xl"
+                fontWeight="700"
+                fontFamily="var(--font-sorts-mill)"
+                color="rgba(139, 69, 19, 0.15)"
+                textShadow="0 2px 4px rgba(0,0,0,0.1)"
+                letterSpacing="0.05em"
+                userSelect="none"
+                lineHeight="0.9"
+              >
+                Intercessor
+              </Text>
+            </VStack>
+          </Box>
+          
           </Box>
         </Box>
       </Box>
@@ -142,40 +205,6 @@ export default function TournamentBracket({
   );
 }
 
-// Tournament Header Component
-function TournamentHeader({ 
-  tournament, 
-  bracketWidth 
-}: { 
-  tournament: Tournament; 
-  bracketWidth: number; 
-}) {
-  const textColor = useColorModeValue('gray.800', 'gray.100');
-  
-  return (
-    <Box w="full" display="flex" justifyContent="center" h="60px" pt={2}>
-      <Box textAlign="center">
-        <VStack spacing={1}>
-          <Text 
-            fontSize="4xl" 
-            fontWeight="600" 
-            color={textColor}
-            fontFamily="var(--font-sorts-mill)"
-            textShadow="0 1px 2px rgba(0,0,0,0.1)"
-          >
-            {tournament.title}
-          </Text>
-          
-          {tournament.status === 'active' && (
-            <Badge colorScheme="green" fontSize="sm" px={3} py={1}>
-              Tournament Active
-            </Badge>
-          )}
-        </VStack>
-      </Box>
-    </Box>
-  );
-}
 
 // SVG Bracket Lines Component
 function BracketLines({ 
@@ -386,7 +415,7 @@ function SaintMatchupDisplay({
           )}
           
           <Text
-            fontSize="sm"
+            fontSize="17px"
             fontWeight={isWinner ? 'bold' : 'medium'}
             color={isWinner ? winnerColor : textColor}
             isTruncated
