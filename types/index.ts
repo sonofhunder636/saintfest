@@ -216,6 +216,7 @@ export interface TournamentMatch {
   previousMatch1Id?: string; // Source matches for this match
   previousMatch2Id?: string;
   isLeftSide?: boolean; // Track which side of bracket (for March Madness layout)
+  isChampionship?: boolean; // Special championship bracket with single saint display
 }
 
 export interface MatchPosition {

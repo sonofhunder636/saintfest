@@ -153,9 +153,9 @@ function TournamentHeader({
   const textColor = useColorModeValue('gray.800', 'gray.100');
   
   return (
-    <Box w="full" display="flex" justifyContent="center" py={0}>
+    <Box w="full" display="flex" justifyContent="center" h="60px" pt={2}>
       <Box textAlign="center">
-        <VStack spacing={3}>
+        <VStack spacing={1}>
           <Text 
             fontSize="4xl" 
             fontWeight="600" 
@@ -270,41 +270,63 @@ function MatchDisplay({
         onClick={onMatchClick}
       >
         {/* Match Content */}
-        <VStack spacing={0} h="full" justify="center">
-          {match.saint1 ? (
-            <SaintMatchupDisplay 
-              saint={match.saint1} 
-              isWinner={match.winner?.id === match.saint1.id}
-              votes={match.votesForSaint1}
-              totalVotes={match.totalVotes}
-              tournament={tournament}
-              interactive={interactive}
-              onClick={() => onSaintClick?.(match.saint1!)}
-            />
-          ) : (
-            <Box h="50%" display="flex" alignItems="center" justifyContent="center">
-              {/* Empty - no TBD text */}
-            </Box>
-          )}
-          
-          <Box w="full" h="1px" bg={borderColor} />
-          
-          {match.saint2 ? (
-            <SaintMatchupDisplay 
-              saint={match.saint2} 
-              isWinner={match.winner?.id === match.saint2.id}
-              votes={match.votesForSaint2}
-              totalVotes={match.totalVotes}
-              tournament={tournament}
-              interactive={interactive}
-              onClick={() => onSaintClick?.(match.saint2!)}
-            />
-          ) : (
-            <Box h="50%" display="flex" alignItems="center" justifyContent="center">
-              {/* Empty - no TBD text */}
-            </Box>
-          )}
-        </VStack>
+        {match.isChampionship ? (
+          // Championship bracket: single saint, no divider, centered display
+          <Box h="full" display="flex" alignItems="center" justifyContent="center" p={2}>
+            {match.saint1 ? (
+              <SaintMatchupDisplay 
+                saint={match.saint1} 
+                isWinner={match.winner?.id === match.saint1.id}
+                votes={match.votesForSaint1}
+                totalVotes={match.totalVotes}
+                tournament={tournament}
+                interactive={interactive}
+                onClick={() => onSaintClick?.(match.saint1!)}
+              />
+            ) : (
+              <Box display="flex" alignItems="center" justifyContent="center">
+                {/* Empty championship slot */}
+              </Box>
+            )}
+          </Box>
+        ) : (
+          // Normal bracket: two saints with divider
+          <VStack spacing={0} h="full" justify="center">
+            {match.saint1 ? (
+              <SaintMatchupDisplay 
+                saint={match.saint1} 
+                isWinner={match.winner?.id === match.saint1.id}
+                votes={match.votesForSaint1}
+                totalVotes={match.totalVotes}
+                tournament={tournament}
+                interactive={interactive}
+                onClick={() => onSaintClick?.(match.saint1!)}
+              />
+            ) : (
+              <Box h="50%" display="flex" alignItems="center" justifyContent="center">
+                {/* Empty - no TBD text */}
+              </Box>
+            )}
+            
+            <Box w="full" h="1px" bg={borderColor} />
+            
+            {match.saint2 ? (
+              <SaintMatchupDisplay 
+                saint={match.saint2} 
+                isWinner={match.winner?.id === match.saint2.id}
+                votes={match.votesForSaint2}
+                totalVotes={match.totalVotes}
+                tournament={tournament}
+                interactive={interactive}
+                onClick={() => onSaintClick?.(match.saint2!)}
+              />
+            ) : (
+              <Box h="50%" display="flex" alignItems="center" justifyContent="center">
+                {/* Empty - no TBD text */}
+              </Box>
+            )}
+          </VStack>
+        )}
       </Box>
     </Box>
   );
