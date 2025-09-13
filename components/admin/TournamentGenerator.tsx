@@ -26,12 +26,12 @@ import {
   useToast,
   useColorModeValue
 } from '@chakra-ui/react';
-import { 
-  Shuffle, 
-  Download, 
-  Eye, 
-  Save, 
-  RefreshCw, 
+import {
+  Shuffle,
+  Download,
+  Eye,
+  Upload,
+  RefreshCw,
   Settings,
   Crown,
   Users,
@@ -369,11 +369,22 @@ export default function TournamentGenerator({
                 </Button>
                 
                 <Button
-                  leftIcon={<Save />}
-                  colorScheme="blue"
-                  onClick={() => onTournamentSaved?.(tournament)}
+                  leftIcon={<Upload />}
+                  colorScheme="green"
+                  onClick={() => {
+                    if (window.confirm(
+                      'Are you sure you want to publish this tournament?\n\n' +
+                      'This will:\n' +
+                      '• Make the bracket visible on the public 2025 Saintfest Bracket page\n' +
+                      '• Create an archive backup of the current tournament\n' +
+                      '• Replace any previously published bracket\n\n' +
+                      'Click OK to proceed with publishing.'
+                    )) {
+                      onTournamentSaved?.(tournament);
+                    }
+                  }}
                 >
-                  Save Tournament
+                  Publish Tournament
                 </Button>
               </HStack>
             )}

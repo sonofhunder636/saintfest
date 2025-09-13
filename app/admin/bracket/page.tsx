@@ -18,14 +18,32 @@ export default function BracketAdminPage() {
 
   const handleTournamentSaved = async (tournament: Tournament) => {
     try {
-      // TODO: Implement tournament saving to database
-      console.log('Saving tournament:', tournament);
-      
-      // For now, just log success
-      console.log('Tournament saved successfully');
-      
+      console.log('Publishing tournament:', tournament);
+
+      const response = await fetch('/api/bracket/publish', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tournament: tournament,
+          publishedBy: currentUser?.id || 'admin'
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        console.log('Tournament published successfully:', result);
+        alert(`Tournament published successfully!\n\nPublished Bracket ID: ${result.publishedBracketId}\nArchive ID: ${result.archiveId}`);
+      } else {
+        console.error('Failed to publish tournament:', result.error);
+        alert(`Failed to publish tournament: ${result.error}`);
+      }
+
     } catch (error) {
-      console.error('Failed to save tournament:', error);
+      console.error('Failed to publish tournament:', error);
+      alert(`Failed to publish tournament: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

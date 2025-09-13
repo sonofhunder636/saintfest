@@ -266,6 +266,136 @@ export interface TournamentConfig {
   exportFormats: ('pdf' | 'png' | 'svg')[];
 }
 
+// Published bracket system for flattened, display-optimized data
+export interface PublishedBracket {
+  id: string;
+  year: number;
+  title: string; // "Saintfest 2025"
+  publishedAt: Date;
+  publishedBy: string; // User ID who published
+
+  // Flattened display data
+  matches: PublishedMatch[];
+  categories: PublishedCategory[];
+  dimensions: PublishedDimensions;
+  connections: PublishedConnection[]; // Bracket connection lines
+  colorPalette: TournamentColors; // Colors for consistent styling
+  centerOverlay: PublishedCenterOverlay; // "Blessed Intercessor" text
+
+  // Archive reference
+  archiveId: string; // Reference to full Tournament backup
+
+  // Status tracking
+  isActive: boolean; // Is this the currently displayed bracket
+}
+
+export interface PublishedMatch {
+  id: string;
+  roundNumber: number;
+  matchNumber: number;
+
+  // Resolved saint data (no lookups needed)
+  saint1Name: string | null;
+  saint2Name: string | null;
+  saint1Seed?: number;
+  saint2Seed?: number;
+
+  // Vote data (if completed)
+  votesForSaint1: number;
+  votesForSaint2: number;
+  winnerId?: string;
+  winnerName?: string;
+
+  // Pre-calculated positioning (absolute pixels)
+  position: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+
+  // Display properties
+  categoryAffiliation?: string;
+  isLeftSide: boolean;
+  isChampionship?: boolean;
+}
+
+export interface PublishedCategory {
+  id: string;
+  name: string; // "Martyrs", "Doctors of the Church"
+  color: string;
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
+  // Pre-calculated label positioning
+  labelPosition: {
+    x: number;
+    y: number;
+    centerY: number;
+    quadrantHeight: number;
+  };
+
+  // Saints for reference (display names only)
+  saints: Array<{
+    name: string;
+    seed: number;
+  }>;
+}
+
+export interface PublishedDimensions {
+  // Original bracket dimensions
+  totalWidth: number;
+  totalHeight: number;
+
+  // Responsive scaling factors
+  scales: {
+    desktop: number; // 1.0
+    tablet: number;  // 0.75
+    mobile: number;  // 0.5
+  };
+
+  // Container breakpoints
+  breakpoints: {
+    desktop: number; // px width when full scale
+    tablet: number;  // px width when tablet scale
+    mobile: number;  // px width when mobile scale
+  };
+}
+
+export interface PublishedConnection {
+  id: string;
+  type: 'horizontal' | 'vertical';
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  strokeWidth: number;
+  color?: string; // Optional, falls back to colorPalette.lines
+}
+
+export interface PublishedCenterOverlay {
+  text: string[]; // ["Blessed", "Intercessor"]
+  x: number; // Center X position
+  y: number; // Center Y position
+  fontSize: number;
+  fontFamily: string;
+  color: string;
+  opacity: number;
+}
+
+export interface TournamentArchive {
+  id: string;
+  originalTournamentId: string;
+  archivedAt: Date;
+  archivedBy: string;
+
+  // Full tournament data for recovery
+  tournamentData: Tournament;
+
+  // Metadata
+  reason?: string; // Why archived (published, backup, etc.)
+  publishedBracketId?: string; // If this was published
+}
+
 // Text measurement and layout utilities
 export interface TextMeasurement {
   width: number;
