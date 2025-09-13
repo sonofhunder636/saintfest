@@ -209,7 +209,7 @@ export default function TournamentBracket({
                 labelX = 10; // Left side: 10px from absolute left
                 isLeftSide = true;
               } else {
-                labelX = layoutData.layout.totalWidth - 210; // Right side: 200px label width + 10px margin
+                labelX = layoutData.layout.totalWidth - 210; // Right side: 200px label width + 10px margin from right
                 isLeftSide = false;
               }
               

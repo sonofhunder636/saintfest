@@ -17,9 +17,13 @@ const LAYOUT_CONSTANTS = {
   CATEGORY_SPACING: 30, // Space between categories in round 1
   TITLE_HEIGHT: 60, // Space for title at top
   
-  // Margins
-  MARGIN_LEFT: 200, // Increased for 100px category labels
-  MARGIN_RIGHT: 40,
+  // Label spacing
+  LABEL_SPACE: 200, // Width reserved for category labels
+  LABEL_MARGIN: 10, // Spacing around labels
+
+  // Margins (updated to account for label space)
+  MARGIN_LEFT: 220, // 10px + 200px label + 10px space
+  MARGIN_RIGHT: 220, // 10px space + 200px label + 10px
   MARGIN_TOP: 40,
   MARGIN_BOTTOM: 40,
   
@@ -45,15 +49,6 @@ const LAYOUT_CONSTANTS = {
   
   // Center spacing
   CENTER_GAP: 600, // Gap for visual separation and connections
-  
-  // Category label space - symmetrical design
-  CATEGORY_LABEL_SPACE: 150, // Dedicated horizontal space for rotated category labels
-  LABEL_MARGIN: 10, // Gap between labels and bracket edges
-  LABEL_WIDTH: 200, // Dedicated space for each label (with improved text wrapping)
-  CENTER_GAP_AFTER_ROUND_5: 100, // Gap after left Round 5 before right side mirroring
-  
-  // Round positioning
-  ROUND_1_OFFSET: 100, // Additional right shift for Round 1 bracket slots
   
   // Text styling
   FONT_FAMILY: 'var(--font-sorts-mill)',
@@ -341,8 +336,8 @@ export class TournamentLayoutEngine {
     const matches: TournamentMatch[] = [];
     let matchNumber = 1;
     
-    // Only generate left side matches (with additional right offset)
-    const leftSideX = LAYOUT_CONSTANTS.MARGIN_LEFT + LAYOUT_CONSTANTS.ROUND_1_OFFSET;
+    // Only generate left side matches
+    const leftSideX = LAYOUT_CONSTANTS.MARGIN_LEFT;
     
     // Calculate vertical spacing - distribute 8 matches evenly on left side
     const totalHeight = this.calculateTotalBracketHeight();
@@ -474,8 +469,8 @@ export class TournamentLayoutEngine {
         return isLeftSide ? LAYOUT_CONSTANTS.MARGIN_LEFT : totalWidth - LAYOUT_CONSTANTS.MARGIN_RIGHT - matchDimensions.width;
       
       case 2:
-        // Position inward from Round 1 (account for Round 1 offset)
-        const round1LeftX = LAYOUT_CONSTANTS.MARGIN_LEFT + LAYOUT_CONSTANTS.ROUND_1_OFFSET;
+        // Position inward from Round 1
+        const round1LeftX = LAYOUT_CONSTANTS.MARGIN_LEFT;
         const round1RightX = totalWidth - LAYOUT_CONSTANTS.MARGIN_RIGHT - matchDimensions.width;
         const connectionOffset = LAYOUT_CONSTANTS.JUNCTION_LENGTH + LAYOUT_CONSTANTS.CONNECTION_LENGTH;
         
@@ -517,41 +512,21 @@ export class TournamentLayoutEngine {
   }
 
   /**
-   * Calculate total bracket width for symmetrical layout with labels on both sides
+   * Calculate total bracket width for 4 rounds with center gap after horizontal lines
    */
   private calculateFullBracketWidth(matchDimensions: { width: number; height: number }): number {
-    // Left side: labels + margin + bracket (Rounds 1-5)
-    const leftSideWidth = LAYOUT_CONSTANTS.LABEL_MARGIN + 
-                          LAYOUT_CONSTANTS.LABEL_WIDTH + 
-                          LAYOUT_CONSTANTS.LABEL_MARGIN +
-                          LAYOUT_CONSTANTS.MARGIN_LEFT + 
-                          matchDimensions.width + // Round 1
-                          LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 2
-                          matchDimensions.width + // Round 2
-                          LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 3
-                          matchDimensions.width + // Round 3
-                          LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 4
-                          matchDimensions.width + // Round 4
-                          LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 5
-                          matchDimensions.width; // Round 5
+    // Convergent layout: single progression to center, then mirror with center gap
+    const singleSideWidth = LAYOUT_CONSTANTS.MARGIN_LEFT + 
+                            matchDimensions.width + // Round 1
+                            LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 2
+                            matchDimensions.width + // Round 2
+                            LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 3
+                            matchDimensions.width + // Round 3
+                            LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 4
+                            matchDimensions.width; // Round 4
     
-    // Right side: bracket (Rounds 5-1) + margin + labels
-    const rightSideWidth = matchDimensions.width + // Round 5 (mirrored)
-                           LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 4
-                           matchDimensions.width + // Round 4
-                           LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 3
-                           matchDimensions.width + // Round 3
-                           LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 2
-                           matchDimensions.width + // Round 2
-                           LAYOUT_CONSTANTS.ROUND_SPACING + // Space to Round 1
-                           matchDimensions.width + // Round 1
-                           LAYOUT_CONSTANTS.MARGIN_RIGHT +
-                           LAYOUT_CONSTANTS.LABEL_MARGIN +
-                           LAYOUT_CONSTANTS.LABEL_WIDTH +
-                           LAYOUT_CONSTANTS.LABEL_MARGIN;
-    
-    // Total width: left side + center gap + right side
-    return leftSideWidth + LAYOUT_CONSTANTS.CENTER_GAP_AFTER_ROUND_5 + rightSideWidth;
+    // Total width: left side + center gap (after horizontal lines) + right side
+    return singleSideWidth + LAYOUT_CONSTANTS.CENTER_GAP + matchDimensions.width + LAYOUT_CONSTANTS.MARGIN_RIGHT;
   }
 
 
