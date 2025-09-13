@@ -131,54 +131,104 @@ export default function TournamentBracket({
             />
           ))}
           
-          {/* Category Label for Matches 1-4 */}
+          {/* Symmetrical Category Labels - Direct Category Position Mapping */}
           {(() => {
-            // Find matches 1-4 (Round 1, left side, first category)
-            const matches1to4 = layoutData.matches.filter(
-              match => match.roundNumber === 1 && 
-                      match.isLeftSide === true && 
-                      match.matchNumber >= 1 && 
-                      match.matchNumber <= 4
-            );
+            const categoryLabels = [];
             
-            if (matches1to4.length === 0) return null;
+            // Helper function to get matches for a specific quadrant based on position
+            const getMatchesForQuadrant = (position: string) => {
+              switch (position) {
+                case 'top-left':
+                  return layoutData.matches.filter(
+                    match => match.roundNumber === 1 && 
+                            match.isLeftSide === true && 
+                            match.matchNumber >= 1 && 
+                            match.matchNumber <= 4
+                  );
+                case 'bottom-left':
+                  return layoutData.matches.filter(
+                    match => match.roundNumber === 1 && 
+                            match.isLeftSide === true && 
+                            match.matchNumber >= 5 && 
+                            match.matchNumber <= 8
+                  );
+                case 'top-right':
+                  return layoutData.matches.filter(
+                    match => match.roundNumber === 1 && 
+                            match.isLeftSide === false && 
+                            match.matchNumber >= 9 && 
+                            match.matchNumber <= 12
+                  );
+                case 'bottom-right':
+                  return layoutData.matches.filter(
+                    match => match.roundNumber === 1 && 
+                            match.isLeftSide === false && 
+                            match.matchNumber >= 13 && 
+                            match.matchNumber <= 16
+                  );
+                default:
+                  return [];
+              }
+            };
             
-            // Get category from first match's categoryAffiliation
-            const categoryId = matches1to4[0].categoryAffiliation;
-            const category = tournament.categories.find(cat => cat.id === categoryId);
+            // Helper function to calculate full quadrant span and center
+            const calculateQuadrantSpanAndCenter = (position: string) => {
+              const quadrantMatches = getMatchesForQuadrant(position);
+              
+              if (quadrantMatches.length === 0) {
+                return {
+                  centerY: layoutData.layout.totalHeight / 2,
+                  quadrantTop: 0,
+                  quadrantBottom: 0,
+                  quadrantHeight: 0
+                };
+              }
+              
+              // Calculate full span from top of first match to bottom of last match
+              const quadrantTop = Math.min(...quadrantMatches.map(m => m.position.y));
+              const quadrantBottom = Math.max(...quadrantMatches.map(m => m.position.y + m.position.height));
+              const quadrantHeight = quadrantBottom - quadrantTop;
+              const centerY = quadrantTop + (quadrantHeight / 2);
+              
+              return {
+                centerY,
+                quadrantTop,
+                quadrantBottom,
+                quadrantHeight
+              };
+            };
             
-            if (!category) return null;
+            // Map categories directly by position property for perfect alignment
+            tournament.categories.forEach((category) => {
+              const position = category.position;
+              let labelX: number;
+              let isLeftSide: boolean;
+              
+              // Calculate horizontal position based on category position
+              if (position === 'top-left' || position === 'bottom-left') {
+                labelX = 10; // Left side: 10px from absolute left
+                isLeftSide = true;
+              } else {
+                labelX = layoutData.layout.totalWidth - 210; // Right side: 200px label width + 10px margin
+                isLeftSide = false;
+              }
+              
+              // Calculate full quadrant span and center using actual match positions
+              const quadrantData = calculateQuadrantSpanAndCenter(position);
+              
+              categoryLabels.push(
+                <CategoryLabel
+                  key={`category-${position}`}
+                  category={category}
+                  position={{ x: labelX }}
+                  centerY={quadrantData.centerY}
+                  quadrantHeight={quadrantData.quadrantHeight}
+                  isLeftSide={isLeftSide}
+                />
+              );
+            });
             
-            // Calculate vertical center of matches 1-4
-            const minY = Math.min(...matches1to4.map(m => m.position.y));
-            const maxY = Math.max(...matches1to4.map(m => m.position.y + m.position.height));
-            const centerY = (minY + maxY) / 2;
-            
-            // Position at absolute left edge of container
-            const labelX = 0; // Fixed position at absolute left edge
-            
-            return (
-              <Box
-                position="absolute"
-                left={`${labelX}px`}
-                top={`${centerY}px`}
-                transform="rotate(-90deg)"
-                transformOrigin="center"
-                zIndex={10}
-                pointerEvents="none"
-              >
-                <Text
-                  fontSize="100px"
-                  fontWeight="600"
-                  color={category.color}
-                  fontFamily="var(--font-sorts-mill)"
-                  textShadow="0 1px 2px rgba(0,0,0,0.1)"
-                  whiteSpace="nowrap"
-                >
-                  {category.name}
-                </Text>
-              </Box>
-            );
+            return categoryLabels;
           })()}
           
           {/* Tournament Title - 700px above center */}
@@ -299,6 +349,57 @@ function BracketLines({
         />
       ))}
     </svg>
+  );
+}
+
+// Reusable Category Label Component with Full Quadrant Space Utilization
+function CategoryLabel({
+  category,
+  position,
+  centerY,
+  quadrantHeight,
+  isLeftSide
+}: {
+  category: { name: string; color: string };
+  position: { x: number };
+  centerY: number;
+  quadrantHeight?: number;
+  isLeftSide: boolean;
+}) {
+  // Use quadrant height if provided, otherwise fallback to default
+  const containerHeight = quadrantHeight || 200;
+  
+  return (
+    <Box
+      position="absolute"
+      left={`${position.x}px`}
+      top={`${centerY - (containerHeight / 2)}px`} // Center the container on the quadrant center
+      transform="rotate(-90deg)" // Consistent rotation for alignment with container above
+      transformOrigin="center"
+      zIndex={10}
+      pointerEvents="none"
+      width="200px"
+      height={`${containerHeight}px`} // Use full quadrant height
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+    >
+      <Text
+        fontSize="90px" // Increased size to utilize the full quadrant space
+        fontWeight="600"
+        color={category.color}
+        fontFamily="var(--font-sorts-mill)"
+        textShadow="0 1px 2px rgba(0,0,0,0.1)"
+        textAlign="center"
+        lineHeight="0.9" // Comfortable line spacing for natural wrapping
+        sx={{
+          wordWrap: 'break-word',
+          overflowWrap: 'break-word'
+        }}
+      >
+        {category.name}
+      </Text>
+    </Box>
   );
 }
 
