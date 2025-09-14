@@ -11,7 +11,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "incremental": true,
-    "outDir": "lib",
+    "outDir": ".",
     "sourceMap": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
