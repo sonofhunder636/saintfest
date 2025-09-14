@@ -1,9 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Configure for Firebase Functions deployment
-  output: 'export',
   trailingSlash: true,
-  distDir: 'out',
   typescript: {
     // Temporarily ignore build errors for deployment
     ignoreBuildErrors: true,
