@@ -1,0 +1,104 @@
+﻿2025-09-14T11:39:45.5913794Z ##[group]Run npm run build
+2025-09-14T11:39:45.5914149Z [36;1mnpm run build[0m
+2025-09-14T11:39:45.5944191Z shell: /usr/bin/bash -e ***0***
+2025-09-14T11:39:45.5944497Z env:
+2025-09-14T11:39:45.5944737Z   NEXT_PUBLIC_FIREBASE_API_KEY: 
+2025-09-14T11:39:45.5945039Z   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: 
+2025-09-14T11:39:45.5945346Z   NEXT_PUBLIC_FIREBASE_PROJECT_ID: 
+2025-09-14T11:39:45.5945648Z   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: 
+2025-09-14T11:39:45.5945973Z   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: 
+2025-09-14T11:39:45.5946291Z   NEXT_PUBLIC_FIREBASE_APP_ID: 
+2025-09-14T11:39:45.5946576Z ##[endgroup]
+2025-09-14T11:39:45.7265586Z 
+2025-09-14T11:39:45.7266054Z > saintfest-voting@0.1.0 build
+2025-09-14T11:39:45.7266470Z > next build
+2025-09-14T11:39:45.7266673Z 
+2025-09-14T11:39:46.3415958Z ⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+2025-09-14T11:39:46.3515504Z Attention: Next.js now collects completely anonymous telemetry regarding usage.
+2025-09-14T11:39:46.3516776Z This information is used to shape Next.js' roadmap and prioritize features.
+2025-09-14T11:39:46.3518790Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2025-09-14T11:39:46.3519857Z https://nextjs.org/telemetry
+2025-09-14T11:39:46.3520197Z 
+2025-09-14T11:39:46.4063678Z    ▲ Next.js 15.5.2
+2025-09-14T11:39:46.4064067Z 
+2025-09-14T11:39:46.4969161Z    Creating an optimized production build ...
+2025-09-14T11:40:03.5266717Z [Error: Cannot apply unknown utility class `border-border`. Are you using CSS modules or similar and missing `@reference`? https://tailwindcss.com/docs/functions-and-directives#reference-directive]
+2025-09-14T11:40:10.7110792Z  ✓ Compiled successfully in 23.9s
+2025-09-14T11:40:10.7207575Z    Skipping validation of types
+2025-09-14T11:40:10.7208114Z    Skipping linting
+2025-09-14T11:40:10.9895351Z    Collecting page data ...
+2025-09-14T11:40:11.6152079Z Firebase initialization skipped: build environment
+2025-09-14T11:40:11.6857240Z Firebase initialization skipped: build environment
+2025-09-14T11:40:11.7359625Z Firebase initialization skipped: build environment
+2025-09-14T11:40:14.9554333Z    Generating static pages (0/36) ...
+2025-09-14T11:40:15.7298963Z Firebase initialization skipped: build environment
+2025-09-14T11:40:15.7303875Z Debug page - Auth state: ***
+2025-09-14T11:40:15.7305773Z   currentUser: null,
+2025-09-14T11:40:15.7307231Z   firebaseUser: null,
+2025-09-14T11:40:15.7307999Z   loading: true,
+2025-09-14T11:40:15.7316479Z   isAdmin: false
+2025-09-14T11:40:15.7317393Z ***
+2025-09-14T11:40:15.7318291Z Firebase initialization skipped: build environment
+2025-09-14T11:40:15.8675333Z Firebase initialization skipped: build environment
+2025-09-14T11:40:16.0133902Z    Generating static pages (9/36) 
+2025-09-14T11:40:16.0135775Z    Generating static pages (18/36) 
+2025-09-14T11:40:16.3839463Z Firebase initialization skipped: build environment
+2025-09-14T11:40:16.3840283Z Current gameState: countdown
+2025-09-14T11:40:16.3841285Z Current timeLeft: *** days: 0, hours: 0, minutes: 0, seconds: 0 ***
+2025-09-14T11:40:16.3842092Z    Generating static pages (27/36) 
+2025-09-14T11:40:16.5020628Z  ✓ Generating static pages (36/36)
+2025-09-14T11:40:16.9614547Z    Finalizing page optimization ...
+2025-09-14T11:40:16.9616284Z    Collecting build traces ...
+2025-09-14T11:40:31.0850829Z 
+2025-09-14T11:40:31.0895028Z Route (app)                                 Size  First Load JS
+2025-09-14T11:40:31.0896408Z ┌ ○ /                                    5.06 kB         116 kB
+2025-09-14T11:40:31.0897705Z ├ ○ /_not-found                             1 kB         103 kB
+2025-09-14T11:40:31.0898824Z ├ ○ /about                               2.69 kB         108 kB
+2025-09-14T11:40:31.0899720Z ├ ○ /admin                               2.27 kB         207 kB
+2025-09-14T11:40:31.0900376Z ├ ○ /admin/bracket                         35 kB         352 kB
+2025-09-14T11:40:31.0901127Z ├ ○ /admin/bracket/debug                 1.71 kB         207 kB
+2025-09-14T11:40:31.0902194Z ├ ○ /admin/bracket/editor                2.48 kB         207 kB
+2025-09-14T11:40:31.0902939Z ├ ƒ /admin/bracket/view/[id]             5.28 kB         217 kB
+2025-09-14T11:40:31.0903620Z ├ ○ /admin/login                         2.57 kB         211 kB
+2025-09-14T11:40:31.0904276Z ├ ○ /admin/posts                         13.5 kB         330 kB
+2025-09-14T11:40:31.0905268Z ├ ○ /admin/posts/create                  4.74 kB         217 kB
+2025-09-14T11:40:31.0905991Z ├ ○ /admin/saints/manager                5.25 kB         210 kB
+2025-09-14T11:40:31.0906750Z ├ ƒ /api/admin/brackets/[id]               195 B         102 kB
+2025-09-14T11:40:31.0907764Z ├ ƒ /api/admin/generate-bracket            195 B         102 kB
+2025-09-14T11:40:31.0908472Z ├ ƒ /api/admin/import-saints               195 B         102 kB
+2025-09-14T11:40:31.0909150Z ├ ƒ /api/admin/posts                       195 B         102 kB
+2025-09-14T11:40:31.0909738Z ├ ƒ /api/admin/posts/[id]                  195 B         102 kB
+2025-09-14T11:40:31.0910458Z ├ ƒ /api/admin/posts/bulk                  195 B         102 kB
+2025-09-14T11:40:31.0911660Z ├ ƒ /api/admin/posts/publish-scheduled     195 B         102 kB
+2025-09-14T11:40:31.0912515Z ├ ƒ /api/admin/posts/stats                 195 B         102 kB
+2025-09-14T11:40:31.0913396Z ├ ƒ /api/admin/promote-user                195 B         102 kB
+2025-09-14T11:40:31.0914344Z ├ ƒ /api/admin/saints                      195 B         102 kB
+2025-09-14T11:40:31.0915201Z ├ ƒ /api/admin/saints/[id]                 195 B         102 kB
+2025-09-14T11:40:31.0916093Z ├ ƒ /api/admin/saints/import               195 B         102 kB
+2025-09-14T11:40:31.0917219Z ├ ƒ /api/admin/saints/wipe                 195 B         102 kB
+2025-09-14T11:40:31.0918177Z ├ ƒ /api/bracket/current                   195 B         102 kB
+2025-09-14T11:40:31.0919081Z ├ ƒ /api/bracket/pdf                       195 B         102 kB
+2025-09-14T11:40:31.0919980Z ├ ƒ /api/bracket/publish                   195 B         102 kB
+2025-09-14T11:40:31.0920918Z ├ ƒ /api/bracket/published-pdf             195 B         102 kB
+2025-09-14T11:40:31.0921863Z ├ ƒ /api/brackets                          195 B         102 kB
+2025-09-14T11:40:31.0922787Z ├ ƒ /api/posts                             195 B         102 kB
+2025-09-14T11:40:31.0923678Z ├ ƒ /api/posts/[id]                        195 B         102 kB
+2025-09-14T11:40:31.0924554Z ├ ƒ /api/saints                            195 B         102 kB
+2025-09-14T11:40:31.0925387Z ├ ƒ /api/votes                             195 B         102 kB
+2025-09-14T11:40:31.0926244Z ├ ƒ /api/voting-sessions                   195 B         102 kB
+2025-09-14T11:40:31.0927193Z ├ ○ /auth/signin                         2.92 kB         208 kB
+2025-09-14T11:40:31.0928073Z ├ ○ /bracket                              4.3 kB         221 kB
+2025-09-14T11:40:31.0928886Z ├ ○ /debug-bracket                       3.57 kB         214 kB
+2025-09-14T11:40:31.0929647Z ├ ○ /posts                               9.47 kB         115 kB
+2025-09-14T11:40:31.0930339Z ├ ƒ /posts/[slug]                        56.7 kB         169 kB
+2025-09-14T11:40:31.0931001Z ├ ○ /test                                  195 B         102 kB
+2025-09-14T11:40:31.0931669Z └ ○ /unauthorized                          195 B         102 kB
+2025-09-14T11:40:31.0932385Z + First Load JS shared by all             102 kB
+2025-09-14T11:40:31.0932990Z   ├ chunks/1255-0dafb2b3edd4dea5.js      45.4 kB
+2025-09-14T11:40:31.0933560Z   ├ chunks/4bd1b696-182b6b13bdad92e3.js  54.2 kB
+2025-09-14T11:40:31.0934115Z   └ other shared chunks (total)          2.26 kB
+2025-09-14T11:40:31.0934404Z 
+2025-09-14T11:40:31.0934413Z 
+2025-09-14T11:40:31.0934718Z ○  (Static)   prerendered as static content
+2025-09-14T11:40:31.0935322Z ƒ  (Dynamic)  server-rendered on demand
+2025-09-14T11:40:31.0935620Z 

@@ -1,0 +1,312 @@
+﻿2025-09-14T11:38:46.1424595Z Current runner version: '2.328.0'
+2025-09-14T11:38:46.1450339Z ##[group]Runner Image Provisioner
+2025-09-14T11:38:46.1451401Z Hosted Compute Agent
+2025-09-14T11:38:46.1452180Z Version: 20250829.383
+2025-09-14T11:38:46.1453059Z Commit: 27cb235aab5b0e52e153a26cd86b4742e89dac5d
+2025-09-14T11:38:46.1454014Z Build Date: 2025-08-29T13:48:48Z
+2025-09-14T11:38:46.1454846Z ##[endgroup]
+2025-09-14T11:38:46.1455569Z ##[group]Operating System
+2025-09-14T11:38:46.1456383Z Ubuntu
+2025-09-14T11:38:46.1457452Z 24.04.3
+2025-09-14T11:38:46.1458207Z LTS
+2025-09-14T11:38:46.1458879Z ##[endgroup]
+2025-09-14T11:38:46.1459620Z ##[group]Runner Image
+2025-09-14T11:38:46.1460452Z Image: ubuntu-24.04
+2025-09-14T11:38:46.1461215Z Version: 20250907.24.1
+2025-09-14T11:38:46.1462491Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250907.24/images/ubuntu/Ubuntu2404-Readme.md
+2025-09-14T11:38:46.1464420Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250907.24
+2025-09-14T11:38:46.1465707Z ##[endgroup]
+2025-09-14T11:38:46.1467485Z ##[group]GITHUB_TOKEN Permissions
+2025-09-14T11:38:46.1470113Z Contents: read
+2025-09-14T11:38:46.1470862Z Metadata: read
+2025-09-14T11:38:46.1471656Z Packages: read
+2025-09-14T11:38:46.1472338Z ##[endgroup]
+2025-09-14T11:38:46.1474605Z Secret source: Actions
+2025-09-14T11:38:46.1475831Z Prepare workflow directory
+2025-09-14T11:38:46.1893592Z Prepare all required actions
+2025-09-14T11:38:46.1949956Z Getting action download info
+2025-09-14T11:38:46.5248597Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-09-14T11:38:46.6945451Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-09-14T11:38:46.9509697Z Download action repository 'FirebaseExtended/action-hosting-deploy@v0' (SHA:e2eda2e106cfa35cdbcf4ac9ddaf6c4756df2c8c)
+2025-09-14T11:38:47.3419710Z Complete job name: build_and_deploy
+2025-09-14T11:38:47.4189492Z ##[group]Run actions/checkout@v4
+2025-09-14T11:38:47.4190860Z with:
+2025-09-14T11:38:47.4191751Z   repository: sonofhunder636/saintfest
+2025-09-14T11:38:47.4192936Z   token: ***
+2025-09-14T11:38:47.4193793Z   ssh-strict: true
+2025-09-14T11:38:47.4194655Z   ssh-user: git
+2025-09-14T11:38:47.4195535Z   persist-credentials: true
+2025-09-14T11:38:47.4196453Z   clean: true
+2025-09-14T11:38:47.4197559Z   sparse-checkout-cone-mode: true
+2025-09-14T11:38:47.4198594Z   fetch-depth: 1
+2025-09-14T11:38:47.4199453Z   fetch-tags: false
+2025-09-14T11:38:47.4200333Z   show-progress: true
+2025-09-14T11:38:47.4201221Z   lfs: false
+2025-09-14T11:38:47.4202063Z   submodules: false
+2025-09-14T11:38:47.4202923Z   set-safe-directory: true
+2025-09-14T11:38:47.4204130Z ##[endgroup]
+2025-09-14T11:38:47.5302716Z Syncing repository: sonofhunder636/saintfest
+2025-09-14T11:38:47.5305209Z ##[group]Getting Git version info
+2025-09-14T11:38:47.5306510Z Working directory is '/home/runner/work/saintfest/saintfest'
+2025-09-14T11:38:47.5308523Z [command]/usr/bin/git version
+2025-09-14T11:38:47.5367469Z git version 2.51.0
+2025-09-14T11:38:47.5393736Z ##[endgroup]
+2025-09-14T11:38:47.5415450Z Temporarily overriding HOME='/home/runner/work/_temp/7b59546c-2c2f-4af2-90ac-c039008968ae' before making global git config changes
+2025-09-14T11:38:47.5420858Z Adding repository directory to the temporary git global config as a safe directory
+2025-09-14T11:38:47.5422558Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/saintfest/saintfest
+2025-09-14T11:38:47.5457568Z Deleting the contents of '/home/runner/work/saintfest/saintfest'
+2025-09-14T11:38:47.5461322Z ##[group]Initializing the repository
+2025-09-14T11:38:47.5464958Z [command]/usr/bin/git init /home/runner/work/saintfest/saintfest
+2025-09-14T11:38:47.5551780Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-09-14T11:38:47.5553410Z hint: is subject to change. To configure the initial branch name to use in all
+2025-09-14T11:38:47.5555325Z hint: of your new repositories, which will suppress this warning, call:
+2025-09-14T11:38:47.5557801Z hint:
+2025-09-14T11:38:47.5558887Z hint: 	git config --global init.defaultBranch <name>
+2025-09-14T11:38:47.5560296Z hint:
+2025-09-14T11:38:47.5561672Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-09-14T11:38:47.5563062Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-09-14T11:38:47.5564415Z hint:
+2025-09-14T11:38:47.5565283Z hint: 	git branch -m <name>
+2025-09-14T11:38:47.5566588Z hint:
+2025-09-14T11:38:47.5567973Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-09-14T11:38:47.5569493Z Initialized empty Git repository in /home/runner/work/saintfest/saintfest/.git/
+2025-09-14T11:38:47.5572081Z [command]/usr/bin/git remote add origin https://github.com/sonofhunder636/saintfest
+2025-09-14T11:38:47.5604421Z ##[endgroup]
+2025-09-14T11:38:47.5605875Z ##[group]Disabling automatic garbage collection
+2025-09-14T11:38:47.5608186Z [command]/usr/bin/git config --local gc.auto 0
+2025-09-14T11:38:47.5637671Z ##[endgroup]
+2025-09-14T11:38:47.5639063Z ##[group]Setting up auth
+2025-09-14T11:38:47.5643718Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-09-14T11:38:47.5673566Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-09-14T11:38:47.6076589Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-09-14T11:38:47.6108160Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-09-14T11:38:47.6326392Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-09-14T11:38:47.6360873Z ##[endgroup]
+2025-09-14T11:38:47.6376818Z ##[group]Fetching the repository
+2025-09-14T11:38:47.6379930Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +3919b6852d29bce8e712f58f890f7ab6f364a616:refs/remotes/origin/main
+2025-09-14T11:38:48.1261282Z From https://github.com/sonofhunder636/saintfest
+2025-09-14T11:38:48.1263450Z  * [new ref]         3919b6852d29bce8e712f58f890f7ab6f364a616 -> origin/main
+2025-09-14T11:38:48.1267495Z ##[endgroup]
+2025-09-14T11:38:48.1268816Z ##[group]Determining the checkout info
+2025-09-14T11:38:48.1270718Z ##[endgroup]
+2025-09-14T11:38:48.1271650Z [command]/usr/bin/git sparse-checkout disable
+2025-09-14T11:38:48.1307883Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-09-14T11:38:48.1338831Z ##[group]Checking out the ref
+2025-09-14T11:38:48.1343130Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-09-14T11:38:48.1909625Z Switched to a new branch 'main'
+2025-09-14T11:38:48.1912437Z branch 'main' set up to track 'origin/main'.
+2025-09-14T11:38:48.1924486Z ##[endgroup]
+2025-09-14T11:38:48.1970782Z [command]/usr/bin/git log -1 --format=%H
+2025-09-14T11:38:48.1995799Z 3919b6852d29bce8e712f58f890f7ab6f364a616
+2025-09-14T11:38:48.2319615Z ##[group]Run actions/setup-node@v4
+2025-09-14T11:38:48.2320496Z with:
+2025-09-14T11:38:48.2321005Z   node-version: 18
+2025-09-14T11:38:48.2321605Z   cache: npm
+2025-09-14T11:38:48.2322164Z   always-auth: false
+2025-09-14T11:38:48.2322801Z   check-latest: false
+2025-09-14T11:38:48.2323734Z   token: ***
+2025-09-14T11:38:48.2324274Z ##[endgroup]
+2025-09-14T11:38:48.4529112Z Found in cache @ /opt/hostedtoolcache/node/18.20.8/x64
+2025-09-14T11:38:48.4535526Z ##[group]Environment details
+2025-09-14T11:38:52.2776312Z node: v18.20.8
+2025-09-14T11:38:52.2776791Z npm: 10.8.2
+2025-09-14T11:38:52.2777604Z yarn: 1.22.22
+2025-09-14T11:38:52.2781222Z ##[endgroup]
+2025-09-14T11:38:52.2801633Z [command]/opt/hostedtoolcache/node/18.20.8/x64/bin/npm config get cache
+2025-09-14T11:38:52.7361467Z /home/runner/.npm
+2025-09-14T11:38:52.9246472Z npm cache is not found
+2025-09-14T11:38:52.9403195Z ##[group]Run npm ci
+2025-09-14T11:38:52.9403576Z [36;1mnpm ci[0m
+2025-09-14T11:38:52.9548732Z shell: /usr/bin/bash -e ***0***
+2025-09-14T11:38:52.9549074Z ##[endgroup]
+2025-09-14T11:38:58.3560360Z npm warn EBADENGINE Unsupported engine ***
+2025-09-14T11:38:58.3561508Z npm warn EBADENGINE   package: 'simple-xml-to-json@1.2.3',
+2025-09-14T11:38:58.3562558Z npm warn EBADENGINE   required: *** node: '>=20.12.2' ***,
+2025-09-14T11:38:58.3563630Z npm warn EBADENGINE   current: *** node: 'v18.20.8', npm: '10.8.2' ***
+2025-09-14T11:38:58.3564464Z npm warn EBADENGINE ***
+2025-09-14T11:39:01.2473067Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2025-09-14T11:39:02.8022853Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2025-09-14T11:39:02.9793547Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-09-14T11:39:05.3669123Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+2025-09-14T11:39:05.3670674Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+2025-09-14T11:39:10.2972462Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+2025-09-14T11:39:10.9770302Z npm warn deprecated core-js@1.2.7: core-js@<3.23.3 is no longer maintained and not recommended for usage due to the number of issues. Because of the V8 engine whims, feature detection in old core-js versions could cause a slowdown up to 100x even if nothing is polyfilled. Some versions have web compatibility issues. Please, upgrade your dependencies to the actual version of core-js.
+2025-09-14T11:39:45.2500770Z 
+2025-09-14T11:39:45.2501662Z added 1086 packages, and audited 1087 packages in 52s
+2025-09-14T11:39:45.2502419Z 
+2025-09-14T11:39:45.2505813Z 314 packages are looking for funding
+2025-09-14T11:39:45.2507322Z   run `npm fund` for details
+2025-09-14T11:39:45.5327408Z 
+2025-09-14T11:39:45.5328913Z 11 vulnerabilities (4 moderate, 7 high)
+2025-09-14T11:39:45.5329524Z 
+2025-09-14T11:39:45.5329993Z To address issues that do not require attention, run:
+2025-09-14T11:39:45.5330690Z   npm audit fix
+2025-09-14T11:39:45.5330968Z 
+2025-09-14T11:39:45.5331483Z To address all issues possible (including breaking changes), run:
+2025-09-14T11:39:45.5332297Z   npm audit fix --force
+2025-09-14T11:39:45.5332602Z 
+2025-09-14T11:39:45.5333002Z Some issues need review, and may require choosing
+2025-09-14T11:39:45.5333690Z a different dependency.
+2025-09-14T11:39:45.5333965Z 
+2025-09-14T11:39:45.5334192Z Run `npm audit` for details.
+2025-09-14T11:39:45.5913806Z ##[group]Run npm run build
+2025-09-14T11:39:45.5914152Z [36;1mnpm run build[0m
+2025-09-14T11:39:45.5944198Z shell: /usr/bin/bash -e ***0***
+2025-09-14T11:39:45.5944500Z env:
+2025-09-14T11:39:45.5944739Z   NEXT_PUBLIC_FIREBASE_API_KEY: 
+2025-09-14T11:39:45.5945042Z   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: 
+2025-09-14T11:39:45.5945348Z   NEXT_PUBLIC_FIREBASE_PROJECT_ID: 
+2025-09-14T11:39:45.5945650Z   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: 
+2025-09-14T11:39:45.5945975Z   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: 
+2025-09-14T11:39:45.5946293Z   NEXT_PUBLIC_FIREBASE_APP_ID: 
+2025-09-14T11:39:45.5946579Z ##[endgroup]
+2025-09-14T11:39:45.7265613Z 
+2025-09-14T11:39:45.7266059Z > saintfest-voting@0.1.0 build
+2025-09-14T11:39:45.7266474Z > next build
+2025-09-14T11:39:45.7266676Z 
+2025-09-14T11:39:46.3415995Z ⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+2025-09-14T11:39:46.3515625Z Attention: Next.js now collects completely anonymous telemetry regarding usage.
+2025-09-14T11:39:46.3516785Z This information is used to shape Next.js' roadmap and prioritize features.
+2025-09-14T11:39:46.3518797Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2025-09-14T11:39:46.3519863Z https://nextjs.org/telemetry
+2025-09-14T11:39:46.3520201Z 
+2025-09-14T11:39:46.4063713Z    ▲ Next.js 15.5.2
+2025-09-14T11:39:46.4064079Z 
+2025-09-14T11:39:46.4969205Z    Creating an optimized production build ...
+2025-09-14T11:40:03.5266760Z [Error: Cannot apply unknown utility class `border-border`. Are you using CSS modules or similar and missing `@reference`? https://tailwindcss.com/docs/functions-and-directives#reference-directive]
+2025-09-14T11:40:10.7110828Z  ✓ Compiled successfully in 23.9s
+2025-09-14T11:40:10.7207590Z    Skipping validation of types
+2025-09-14T11:40:10.7208118Z    Skipping linting
+2025-09-14T11:40:10.9895387Z    Collecting page data ...
+2025-09-14T11:40:11.6152154Z Firebase initialization skipped: build environment
+2025-09-14T11:40:11.6857283Z Firebase initialization skipped: build environment
+2025-09-14T11:40:11.7359665Z Firebase initialization skipped: build environment
+2025-09-14T11:40:14.9554375Z    Generating static pages (0/36) ...
+2025-09-14T11:40:15.7299015Z Firebase initialization skipped: build environment
+2025-09-14T11:40:15.7303888Z Debug page - Auth state: ***
+2025-09-14T11:40:15.7305785Z   currentUser: null,
+2025-09-14T11:40:15.7307242Z   firebaseUser: null,
+2025-09-14T11:40:15.7308005Z   loading: true,
+2025-09-14T11:40:15.7316492Z   isAdmin: false
+2025-09-14T11:40:15.7317401Z ***
+2025-09-14T11:40:15.7318301Z Firebase initialization skipped: build environment
+2025-09-14T11:40:15.8675374Z Firebase initialization skipped: build environment
+2025-09-14T11:40:16.0133933Z    Generating static pages (9/36) 
+2025-09-14T11:40:16.0135786Z    Generating static pages (18/36) 
+2025-09-14T11:40:16.3839537Z Firebase initialization skipped: build environment
+2025-09-14T11:40:16.3840290Z Current gameState: countdown
+2025-09-14T11:40:16.3841293Z Current timeLeft: *** days: 0, hours: 0, minutes: 0, seconds: 0 ***
+2025-09-14T11:40:16.3842096Z    Generating static pages (27/36) 
+2025-09-14T11:40:16.5020667Z  ✓ Generating static pages (36/36)
+2025-09-14T11:40:16.9614597Z    Finalizing page optimization ...
+2025-09-14T11:40:16.9616298Z    Collecting build traces ...
+2025-09-14T11:40:31.0850880Z 
+2025-09-14T11:40:31.0895042Z Route (app)                                 Size  First Load JS
+2025-09-14T11:40:31.0896416Z ┌ ○ /                                    5.06 kB         116 kB
+2025-09-14T11:40:31.0897712Z ├ ○ /_not-found                             1 kB         103 kB
+2025-09-14T11:40:31.0898829Z ├ ○ /about                               2.69 kB         108 kB
+2025-09-14T11:40:31.0899724Z ├ ○ /admin                               2.27 kB         207 kB
+2025-09-14T11:40:31.0900380Z ├ ○ /admin/bracket                         35 kB         352 kB
+2025-09-14T11:40:31.0901441Z ├ ○ /admin/bracket/debug                 1.71 kB         207 kB
+2025-09-14T11:40:31.0902199Z ├ ○ /admin/bracket/editor                2.48 kB         207 kB
+2025-09-14T11:40:31.0902945Z ├ ƒ /admin/bracket/view/[id]             5.28 kB         217 kB
+2025-09-14T11:40:31.0903623Z ├ ○ /admin/login                         2.57 kB         211 kB
+2025-09-14T11:40:31.0904279Z ├ ○ /admin/posts                         13.5 kB         330 kB
+2025-09-14T11:40:31.0905274Z ├ ○ /admin/posts/create                  4.74 kB         217 kB
+2025-09-14T11:40:31.0905994Z ├ ○ /admin/saints/manager                5.25 kB         210 kB
+2025-09-14T11:40:31.0906756Z ├ ƒ /api/admin/brackets/[id]               195 B         102 kB
+2025-09-14T11:40:31.0907769Z ├ ƒ /api/admin/generate-bracket            195 B         102 kB
+2025-09-14T11:40:31.0908474Z ├ ƒ /api/admin/import-saints               195 B         102 kB
+2025-09-14T11:40:31.0909153Z ├ ƒ /api/admin/posts                       195 B         102 kB
+2025-09-14T11:40:31.0909757Z ├ ƒ /api/admin/posts/[id]                  195 B         102 kB
+2025-09-14T11:40:31.0910464Z ├ ƒ /api/admin/posts/bulk                  195 B         102 kB
+2025-09-14T11:40:31.0911666Z ├ ƒ /api/admin/posts/publish-scheduled     195 B         102 kB
+2025-09-14T11:40:31.0912520Z ├ ƒ /api/admin/posts/stats                 195 B         102 kB
+2025-09-14T11:40:31.0913402Z ├ ƒ /api/admin/promote-user                195 B         102 kB
+2025-09-14T11:40:31.0914350Z ├ ƒ /api/admin/saints                      195 B         102 kB
+2025-09-14T11:40:31.0915206Z ├ ƒ /api/admin/saints/[id]                 195 B         102 kB
+2025-09-14T11:40:31.0916097Z ├ ƒ /api/admin/saints/import               195 B         102 kB
+2025-09-14T11:40:31.0917226Z ├ ƒ /api/admin/saints/wipe                 195 B         102 kB
+2025-09-14T11:40:31.0918182Z ├ ƒ /api/bracket/current                   195 B         102 kB
+2025-09-14T11:40:31.0919086Z ├ ƒ /api/bracket/pdf                       195 B         102 kB
+2025-09-14T11:40:31.0920006Z ├ ƒ /api/bracket/publish                   195 B         102 kB
+2025-09-14T11:40:31.0920922Z ├ ƒ /api/bracket/published-pdf             195 B         102 kB
+2025-09-14T11:40:31.0921885Z ├ ƒ /api/brackets                          195 B         102 kB
+2025-09-14T11:40:31.0922793Z ├ ƒ /api/posts                             195 B         102 kB
+2025-09-14T11:40:31.0923684Z ├ ƒ /api/posts/[id]                        195 B         102 kB
+2025-09-14T11:40:31.0924560Z ├ ƒ /api/saints                            195 B         102 kB
+2025-09-14T11:40:31.0925393Z ├ ƒ /api/votes                             195 B         102 kB
+2025-09-14T11:40:31.0926249Z ├ ƒ /api/voting-sessions                   195 B         102 kB
+2025-09-14T11:40:31.0927200Z ├ ○ /auth/signin                         2.92 kB         208 kB
+2025-09-14T11:40:31.0928079Z ├ ○ /bracket                              4.3 kB         221 kB
+2025-09-14T11:40:31.0928892Z ├ ○ /debug-bracket                       3.57 kB         214 kB
+2025-09-14T11:40:31.0929672Z ├ ○ /posts                               9.47 kB         115 kB
+2025-09-14T11:40:31.0930343Z ├ ƒ /posts/[slug]                        56.7 kB         169 kB
+2025-09-14T11:40:31.0931005Z ├ ○ /test                                  195 B         102 kB
+2025-09-14T11:40:31.0931673Z └ ○ /unauthorized                          195 B         102 kB
+2025-09-14T11:40:31.0932391Z + First Load JS shared by all             102 kB
+2025-09-14T11:40:31.0932993Z   ├ chunks/1255-0dafb2b3edd4dea5.js      45.4 kB
+2025-09-14T11:40:31.0933563Z   ├ chunks/4bd1b696-182b6b13bdad92e3.js  54.2 kB
+2025-09-14T11:40:31.0934119Z   └ other shared chunks (total)          2.26 kB
+2025-09-14T11:40:31.0934407Z 
+2025-09-14T11:40:31.0934415Z 
+2025-09-14T11:40:31.0934722Z ○  (Static)   prerendered as static content
+2025-09-14T11:40:31.0935326Z ƒ  (Dynamic)  server-rendered on demand
+2025-09-14T11:40:31.0935622Z 
+2025-09-14T11:40:31.1903123Z ##[group]Run FirebaseExtended/action-hosting-deploy@v0
+2025-09-14T11:40:31.1903508Z with:
+2025-09-14T11:40:31.1903859Z   repoToken: ***
+2025-09-14T11:40:31.1913240Z   firebaseServiceAccount: ***
+
+2025-09-14T11:40:31.1913568Z   projectId: saintfestcode
+2025-09-14T11:40:31.1913863Z   channelId: live
+2025-09-14T11:40:31.1914108Z   expires: 7d
+2025-09-14T11:40:31.1914365Z   entryPoint: .
+2025-09-14T11:40:31.1914621Z   firebaseToolsVersion: latest
+2025-09-14T11:40:31.1914907Z   disableComment: false
+2025-09-14T11:40:31.1915161Z   force: false
+2025-09-14T11:40:31.1915397Z ##[endgroup]
+2025-09-14T11:40:31.2558663Z ##[group]Verifying firebase.json exists
+2025-09-14T11:40:31.2565130Z firebase.json file found. Continuing deploy.
+2025-09-14T11:40:31.2569427Z ##[endgroup]
+2025-09-14T11:40:31.2570127Z ##[group]Setting up CLI credentials
+2025-09-14T11:40:31.2588100Z Created a temporary file with Application Default Credentials.
+2025-09-14T11:40:31.2589117Z ##[endgroup]
+2025-09-14T11:40:31.2598267Z ##[group]Deploying to production site
+2025-09-14T11:40:31.2617937Z [command]/opt/hostedtoolcache/node/18.20.8/x64/bin/npx firebase-tools@latest deploy --only hosting --project saintfestcode --json
+2025-09-14T11:40:32.6201621Z npm warn exec The following package was not found and will be installed: firebase-tools@14.16.0
+2025-09-14T11:40:42.0208894Z npm warn EBADENGINE Unsupported engine ***
+2025-09-14T11:40:42.0209789Z npm warn EBADENGINE   package: 'firebase-tools@14.16.0',
+2025-09-14T11:40:42.0210708Z npm warn EBADENGINE   required: *** node: '>=20.0.0 || >=22.0.0' ***,
+2025-09-14T11:40:42.0211565Z npm warn EBADENGINE   current: *** node: 'v18.20.8', npm: '10.8.2' ***
+2025-09-14T11:40:42.0211996Z npm warn EBADENGINE ***
+2025-09-14T11:40:44.7657367Z npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+2025-09-14T11:41:33.1117849Z Firebase CLI v14.16.0 is incompatible with Node.js v18.20.8 Please upgrade Node.js to version >=20.0.0 || >=22.0.0
+2025-09-14T11:41:33.1377854Z 
+2025-09-14T11:41:33.1379040Z The process '/opt/hostedtoolcache/node/18.20.8/x64/bin/npx' failed with exit code 1
+2025-09-14T11:41:33.1380184Z Retrying deploy with the --debug flag for better error output
+2025-09-14T11:41:33.1388596Z [command]/opt/hostedtoolcache/node/18.20.8/x64/bin/npx firebase-tools@latest deploy --only hosting --project saintfestcode --debug
+2025-09-14T11:41:34.5161489Z Firebase CLI v14.16.0 is incompatible with Node.js v18.20.8 Please upgrade Node.js to version >=20.0.0 || >=22.0.0
+2025-09-14T11:41:34.5381801Z 
+2025-09-14T11:41:34.5384296Z The process '/opt/hostedtoolcache/node/18.20.8/x64/bin/npx' failed with exit code 1
+2025-09-14T11:41:34.5406783Z ##[error]The process '/opt/hostedtoolcache/node/18.20.8/x64/bin/npx' failed with exit code 1
+2025-09-14T11:41:34.5415756Z ***
+2025-09-14T11:41:34.5416054Z   conclusion: 'failure',
+2025-09-14T11:41:34.5416364Z   output: ***
+2025-09-14T11:41:34.5416870Z     title: 'Deploy preview failed',
+2025-09-14T11:41:34.5418094Z     summary: "Error: The process '/opt/hostedtoolcache/node/18.20.8/x64/bin/npx' failed with exit code 1"
+2025-09-14T11:41:34.5418714Z   ***
+2025-09-14T11:41:34.5419003Z ***
+2025-09-14T11:41:34.5518393Z Post job cleanup.
+2025-09-14T11:41:34.6469660Z [command]/usr/bin/git version
+2025-09-14T11:41:34.6505977Z git version 2.51.0
+2025-09-14T11:41:34.6551430Z Temporarily overriding HOME='/home/runner/work/_temp/b504eccb-f4a1-4125-b5da-149625d82b80' before making global git config changes
+2025-09-14T11:41:34.6553035Z Adding repository directory to the temporary git global config as a safe directory
+2025-09-14T11:41:34.6565630Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/saintfest/saintfest
+2025-09-14T11:41:34.6600912Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-09-14T11:41:34.6634170Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-09-14T11:41:34.6862624Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-09-14T11:41:34.6883467Z http.https://github.com/.extraheader
+2025-09-14T11:41:34.6896473Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-09-14T11:41:34.6927646Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-09-14T11:41:34.7261610Z Cleaning up orphan processes

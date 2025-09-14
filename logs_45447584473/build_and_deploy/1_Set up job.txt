@@ -1,0 +1,31 @@
+﻿2025-09-14T11:38:46.1423993Z Current runner version: '2.328.0'
+2025-09-14T11:38:46.1450316Z ##[group]Runner Image Provisioner
+2025-09-14T11:38:46.1451396Z Hosted Compute Agent
+2025-09-14T11:38:46.1452176Z Version: 20250829.383
+2025-09-14T11:38:46.1453054Z Commit: 27cb235aab5b0e52e153a26cd86b4742e89dac5d
+2025-09-14T11:38:46.1454010Z Build Date: 2025-08-29T13:48:48Z
+2025-09-14T11:38:46.1454842Z ##[endgroup]
+2025-09-14T11:38:46.1455566Z ##[group]Operating System
+2025-09-14T11:38:46.1456380Z Ubuntu
+2025-09-14T11:38:46.1457441Z 24.04.3
+2025-09-14T11:38:46.1458203Z LTS
+2025-09-14T11:38:46.1458876Z ##[endgroup]
+2025-09-14T11:38:46.1459616Z ##[group]Runner Image
+2025-09-14T11:38:46.1460449Z Image: ubuntu-24.04
+2025-09-14T11:38:46.1461211Z Version: 20250907.24.1
+2025-09-14T11:38:46.1462487Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250907.24/images/ubuntu/Ubuntu2404-Readme.md
+2025-09-14T11:38:46.1464147Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250907.24
+2025-09-14T11:38:46.1465703Z ##[endgroup]
+2025-09-14T11:38:46.1467475Z ##[group]GITHUB_TOKEN Permissions
+2025-09-14T11:38:46.1470093Z Contents: read
+2025-09-14T11:38:46.1470858Z Metadata: read
+2025-09-14T11:38:46.1471652Z Packages: read
+2025-09-14T11:38:46.1472335Z ##[endgroup]
+2025-09-14T11:38:46.1474586Z Secret source: Actions
+2025-09-14T11:38:46.1475823Z Prepare workflow directory
+2025-09-14T11:38:46.1893544Z Prepare all required actions
+2025-09-14T11:38:46.1949917Z Getting action download info
+2025-09-14T11:38:46.5248554Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-09-14T11:38:46.6945422Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-09-14T11:38:46.9509657Z Download action repository 'FirebaseExtended/action-hosting-deploy@v0' (SHA:e2eda2e106cfa35cdbcf4ac9ddaf6c4756df2c8c)
+2025-09-14T11:38:47.3419674Z Complete job name: build_and_deploy
