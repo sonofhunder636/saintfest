@@ -3,6 +3,11 @@ import { db } from '@/lib/firebase';
 import { collection, doc, addDoc, updateDoc, getDocs, getDoc, query, where, orderBy, limit, startAfter, deleteDoc } from 'firebase/firestore';
 import { headers } from 'next/headers';
 
+// Prevent this route from being executed during build
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export interface BlogPost {
   id?: string;
   title: string;
