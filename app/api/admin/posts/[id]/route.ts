@@ -14,6 +14,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check Firebase connection
+    if (!db) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database connection not available'
+      }, { status: 503 });
+    }
+
     const { id } = await params;
     const docRef = doc(db, 'posts', id);
     const docSnap = await getDoc(docRef);
@@ -55,6 +63,14 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check Firebase connection
+    if (!db) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database connection not available'
+      }, { status: 503 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     console.log('PUT /api/admin/posts/[id] - Received body for ID:', id, JSON.stringify(body, null, 2));
@@ -199,6 +215,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check Firebase connection
+    if (!db) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database connection not available'
+      }, { status: 503 });
+    }
+
     const { id } = await params;
     const docRef = doc(db, 'posts', id);
     const docSnap = await getDoc(docRef);

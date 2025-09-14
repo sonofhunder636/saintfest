@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     // Return PDF as response
     const filename = `saintfest-${publishedBracket.year}-bracket.pdf`;
-    return new Response(pdfBuffer.buffer, {
+    return new Response(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${filename}"`,

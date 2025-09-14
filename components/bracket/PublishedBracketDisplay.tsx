@@ -69,7 +69,6 @@ export default function PublishedBracketDisplay({ bracket }: PublishedBracketDis
           >
           {/* Connection Lines */}
           <svg
-            position="absolute"
             width={`${bracket.dimensions.totalWidth * scale}px`}
             height={`${bracket.dimensions.totalHeight * scale}px`}
             style={{ position: 'absolute', top: 0, left: 0, zIndex: 5, pointerEvents: 'none' }}

@@ -20,6 +20,14 @@ function isWithinVotingHours(): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check Firebase connection
+    if (!db) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database connection not available'
+      }, { status: 503 });
+    }
+
     if (!isWithinVotingHours()) {
       return NextResponse.json(
         { success: false, error: 'Voting is only allowed between midnight and midnight Central Time' },
@@ -135,6 +143,14 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Check Firebase connection
+    if (!db) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database connection not available'
+      }, { status: 503 });
+    }
+
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('sessionId');
     
