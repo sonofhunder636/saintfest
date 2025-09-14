@@ -3,6 +3,10 @@ import { collection, getDocs, query, where, doc, setDoc, Timestamp } from 'fireb
 import { db } from '@/lib/firebase';
 import { Saint, Bracket, BracketRound, BracketMatch } from '@/types';
 
+// Prevent this route from being executed during build
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const { year, categories } = await request.json();
