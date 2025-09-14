@@ -8,6 +8,11 @@ on:
     branches: 
       - main
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
@@ -19,14 +24,14 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
         
     - name: Install Dependencies
       run: npm ci
       
     - name: Build Next.js Application
-      run: npm run build
+      run: npm run build:firebase
       env:
         NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
         NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
@@ -34,20 +39,27 @@ jobs:
         NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
         NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
         NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
-        
-    - name: Deploy to Firebase Hosting (Preview)
+
+    - name: Install Functions Dependencies
+      run: |
+        cd functions
+        npm install
+
+    - name: Build Functions
+      run: |
+        cd functions
+        npm run build
+
+    - name: Deploy to Firebase Functions (Preview)
       if: github.event_name == 'pull_request'
-      uses: FirebaseExtended/action-hosting-deploy@v0
-      with:
-        repoToken: '${{ secrets.GITHUB_TOKEN }}'
-        firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SAINTFESTCODE }}'
-        projectId: saintfestcode
-        
-    - name: Deploy to Firebase Hosting (Production)
+      run: |
+        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SAINTFESTCODE }}' > ${HOME}/gcloud-service-key.json
+        export GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gcloud-service-key.json
+        npx firebase-tools@latest deploy --only functions --project saintfestcode
+
+    - name: Deploy to Firebase Functions (Production)
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      uses: FirebaseExtended/action-hosting-deploy@v0
-      with:
-        repoToken: '${{ secrets.GITHUB_TOKEN }}'
-        firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SAINTFESTCODE }}'
-        projectId: saintfestcode
-        channelId: live
+      run: |
+        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SAINTFESTCODE }}' > ${HOME}/gcloud-service-key.json
+        export GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gcloud-service-key.json
+        npx firebase-tools@latest deploy --only functions --project saintfestcode

@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { doc, deleteDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
+// Prevent this route from being executed during build
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

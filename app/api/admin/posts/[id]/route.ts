@@ -3,6 +3,11 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { BlogPost } from '../route';
 
+// Prevent this route from being executed during build
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET - Get single post
 export async function GET(
   request: NextRequest,
