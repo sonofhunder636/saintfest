@@ -3,6 +3,11 @@ import { db } from '@/lib/firebase';
 import { collection, doc, addDoc, updateDoc, getDocs, getDoc, query, where, orderBy, limit, startAfter, deleteDoc } from 'firebase/firestore';
 import { headers } from 'next/headers';
 
+// Prevent this route from being executed during build
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export interface BlogPost {
   id?: string;
   title: string;
@@ -41,6 +46,29 @@ export interface BlogPost {
 // GET - List posts
 export async function GET(request: NextRequest) {
   try {
+    // Build-time safety checks
+    const isBuildTime = (
+      !request ||
+      typeof request.json !== 'function' ||
+      !globalThis.fetch
+    );
+
+    if (isBuildTime) {
+      return NextResponse.json({
+        success: false,
+        error: 'API not available during build time',
+        buildTime: true
+      }, { status: 503 });
+    }
+
+    // Firebase availability check
+    if (!db) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database connection not available'
+      }, { status: 503 });
+    }
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const slug = searchParams.get('slug');

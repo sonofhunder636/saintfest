@@ -3,8 +3,36 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Saint } from '@/types';
 
+// Prevent this route from being executed during build
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
+    // Build-time safety checks
+    const isBuildTime = (
+      !request ||
+      typeof request.json !== 'function' ||
+      !globalThis.fetch
+    );
+
+    if (isBuildTime) {
+      return NextResponse.json({
+        success: false,
+        error: 'API not available during build time',
+        buildTime: true
+      }, { status: 503 });
+    }
+
+    // Firebase availability check
+    if (!db) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database connection not available'
+      }, { status: 503 });
+    }
+
     const saintsCollection = collection(db, 'saints');
     const saintsQuery = query(saintsCollection, orderBy('name'));
     
