@@ -76,6 +76,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
     }
   };
 
+
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
