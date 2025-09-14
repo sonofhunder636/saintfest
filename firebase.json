@@ -1,4 +1,5 @@
 {
+  "_comment": "Firebase configuration for Next.js Functions v2 deployment",
   "functions": [
     {
       "source": "functions",
