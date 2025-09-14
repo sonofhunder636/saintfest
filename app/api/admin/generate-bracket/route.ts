@@ -6,10 +6,45 @@ import { Saint, Bracket, BracketRound, BracketMatch } from '@/types';
 // Prevent this route from being executed during build
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function POST(request: NextRequest) {
   try {
-    const { year, categories } = await request.json();
+    // Comprehensive build-time safety checks
+    const isBuildTime = (
+      !request ||
+      typeof request.json !== 'function' ||
+      !globalThis.fetch ||
+      process.env.NODE_ENV === 'development' && !request.headers?.get
+    );
+
+    if (isBuildTime) {
+      return NextResponse.json({
+        success: false,
+        error: 'API not available during build time',
+        buildTime: true
+      }, { status: 503 });
+    }
+
+    // Firebase availability check
+    if (!db) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database connection not available'
+      }, { status: 503 });
+    }
+
+    let requestData;
+    try {
+      requestData = await request.json();
+    } catch (error) {
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid request body'
+      }, { status: 400 });
+    }
+
+    const { year, categories } = requestData;
 
     if (!year || !categories?.length) {
       return NextResponse.json(
@@ -28,20 +63,29 @@ export async function POST(request: NextRequest) {
 
     console.log(`Generating 32-saint tournament for ${year} with 4 categories:`, categories);
 
-    // Fetch all saints first
-    const saintsCollection = collection(db, 'saints');
-    const allSaintsSnapshot = await getDocs(saintsCollection);
-    const allSaints: Saint[] = [];
-    
-    allSaintsSnapshot.forEach((doc) => {
-      const data = doc.data();
-      allSaints.push({
-        ...data,
-        id: doc.id,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
-      } as Saint);
-    });
+    // Fetch all saints with proper error handling
+    let allSaints: Saint[] = [];
+    try {
+      const saintsCollection = collection(db, 'saints');
+      const allSaintsSnapshot = await getDocs(saintsCollection);
+
+      allSaintsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        allSaints.push({
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        } as Saint);
+      });
+    } catch (firebaseError) {
+      console.error('Firebase error fetching saints:', firebaseError);
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to fetch saints data',
+        details: firebaseError instanceof Error ? firebaseError.message : 'Unknown error'
+      }, { status: 500 });
+    }
 
     // Select 8 saints from each category (4 categories × 8 saints = 32 total)
     const selectedSaints: Saint[] = [];
@@ -78,19 +122,29 @@ export async function POST(request: NextRequest) {
     // Generate bracket structure
     const bracket = generateBracketStructure(selectedSaints, year);
 
-    // Save bracket to Firestore
-    const bracketRef = doc(collection(db, 'brackets'));
-    await setDoc(bracketRef, {
-      ...bracket,
-      id: bracketRef.id,
-      createdAt: Timestamp.now(),
-    });
-
-    console.log(`Saved bracket with ID: ${bracketRef.id}`);
+    // Save bracket to Firestore with error handling
+    let bracketId;
+    try {
+      const bracketRef = doc(collection(db, 'brackets'));
+      await setDoc(bracketRef, {
+        ...bracket,
+        id: bracketRef.id,
+        createdAt: Timestamp.now(),
+      });
+      bracketId = bracketRef.id;
+      console.log(`Saved bracket with ID: ${bracketId}`);
+    } catch (saveError) {
+      console.error('Firebase error saving bracket:', saveError);
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to save bracket to database',
+        details: saveError instanceof Error ? saveError.message : 'Unknown error'
+      }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
-      bracketId: bracketRef.id,
+      bracketId: bracketId,
       selectedSaints: selectedSaints.length,
       categoryBreakdown: categoryInfo.map(info => ({
         category: info.category,
