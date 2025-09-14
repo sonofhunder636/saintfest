@@ -6,9 +6,15 @@ import { Saint, Bracket, BracketRound, BracketMatch } from '@/types';
 // Prevent this route from being executed during build
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function POST(request: NextRequest) {
   try {
+    // Early return for build-time safety
+    if (process.env.NODE_ENV !== 'production' && !request.headers) {
+      return NextResponse.json({ success: false, error: 'Build-time execution blocked' }, { status: 503 });
+    }
+
     const { year, categories } = await request.json();
 
     if (!year || !categories?.length) {
