@@ -1,0 +1,44 @@
+﻿2025-09-14T11:40:31.1903113Z ##[group]Run FirebaseExtended/action-hosting-deploy@v0
+2025-09-14T11:40:31.1903505Z with:
+2025-09-14T11:40:31.1903856Z   repoToken: ***
+2025-09-14T11:40:31.1913235Z   firebaseServiceAccount: ***
+
+2025-09-14T11:40:31.1913565Z   projectId: saintfestcode
+2025-09-14T11:40:31.1913861Z   channelId: live
+2025-09-14T11:40:31.1914106Z   expires: 7d
+2025-09-14T11:40:31.1914363Z   entryPoint: .
+2025-09-14T11:40:31.1914619Z   firebaseToolsVersion: latest
+2025-09-14T11:40:31.1914905Z   disableComment: false
+2025-09-14T11:40:31.1915159Z   force: false
+2025-09-14T11:40:31.1915395Z ##[endgroup]
+2025-09-14T11:40:31.2558630Z ##[group]Verifying firebase.json exists
+2025-09-14T11:40:31.2565123Z firebase.json file found. Continuing deploy.
+2025-09-14T11:40:31.2569418Z ##[endgroup]
+2025-09-14T11:40:31.2570123Z ##[group]Setting up CLI credentials
+2025-09-14T11:40:31.2588089Z Created a temporary file with Application Default Credentials.
+2025-09-14T11:40:31.2589113Z ##[endgroup]
+2025-09-14T11:40:31.2598173Z ##[group]Deploying to production site
+2025-09-14T11:40:31.2617927Z [command]/opt/hostedtoolcache/node/18.20.8/x64/bin/npx firebase-tools@latest deploy --only hosting --project saintfestcode --json
+2025-09-14T11:40:32.6201576Z npm warn exec The following package was not found and will be installed: firebase-tools@14.16.0
+2025-09-14T11:40:42.0208858Z npm warn EBADENGINE Unsupported engine ***
+2025-09-14T11:40:42.0209784Z npm warn EBADENGINE   package: 'firebase-tools@14.16.0',
+2025-09-14T11:40:42.0210704Z npm warn EBADENGINE   required: *** node: '>=20.0.0 || >=22.0.0' ***,
+2025-09-14T11:40:42.0211562Z npm warn EBADENGINE   current: *** node: 'v18.20.8', npm: '10.8.2' ***
+2025-09-14T11:40:42.0211993Z npm warn EBADENGINE ***
+2025-09-14T11:40:44.7657322Z npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+2025-09-14T11:41:33.1117802Z Firebase CLI v14.16.0 is incompatible with Node.js v18.20.8 Please upgrade Node.js to version >=20.0.0 || >=22.0.0
+2025-09-14T11:41:33.1377785Z 
+2025-09-14T11:41:33.1379031Z The process '/opt/hostedtoolcache/node/18.20.8/x64/bin/npx' failed with exit code 1
+2025-09-14T11:41:33.1380178Z Retrying deploy with the --debug flag for better error output
+2025-09-14T11:41:33.1388578Z [command]/opt/hostedtoolcache/node/18.20.8/x64/bin/npx firebase-tools@latest deploy --only hosting --project saintfestcode --debug
+2025-09-14T11:41:34.5161444Z Firebase CLI v14.16.0 is incompatible with Node.js v18.20.8 Please upgrade Node.js to version >=20.0.0 || >=22.0.0
+2025-09-14T11:41:34.5381754Z 
+2025-09-14T11:41:34.5384290Z The process '/opt/hostedtoolcache/node/18.20.8/x64/bin/npx' failed with exit code 1
+2025-09-14T11:41:34.5406769Z ##[error]The process '/opt/hostedtoolcache/node/18.20.8/x64/bin/npx' failed with exit code 1
+2025-09-14T11:41:34.5415745Z ***
+2025-09-14T11:41:34.5416050Z   conclusion: 'failure',
+2025-09-14T11:41:34.5416362Z   output: ***
+2025-09-14T11:41:34.5416865Z     title: 'Deploy preview failed',
+2025-09-14T11:41:34.5418051Z     summary: "Error: The process '/opt/hostedtoolcache/node/18.20.8/x64/bin/npx' failed with exit code 1"
+2025-09-14T11:41:34.5418711Z   ***
+2025-09-14T11:41:34.5419000Z ***

@@ -1,0 +1,5 @@
+2025-09-14T11:38:43.8260000Z Requested labels: ubuntu-latest
+2025-09-14T11:38:43.8260000Z Job defined at: sonofhunder636/saintfest/.github/workflows/firebase-deploy.yml@refs/heads/main
+2025-09-14T11:38:43.8260000Z Waiting for a runner to pick up this job...
+2025-09-14T11:38:43.8270000Z Job is about to start running on the hosted runner: GitHub Actions 1000000009
+2025-09-14T11:38:43.8260000Z Job is waiting for a hosted runner to come online.
