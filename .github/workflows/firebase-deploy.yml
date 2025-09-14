@@ -50,17 +50,16 @@ jobs:
         cd functions
         npm run build
 
-    - name: Deploy to Firebase (Preview)
+    - name: Deploy to Firebase Functions (Preview)
       if: github.event_name == 'pull_request'
-      uses: FirebaseExtended/action-hosting-deploy@v0
-      with:
-        repoToken: '${{ secrets.GITHUB_TOKEN }}'
-        firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SAINTFESTCODE }}'
-        projectId: saintfestcode
+      run: |
+        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SAINTFESTCODE }}' > ${HOME}/gcloud-service-key.json
+        export GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gcloud-service-key.json
+        npx firebase-tools@latest deploy --only functions --project saintfestcode
 
-    - name: Deploy to Firebase (Production)
+    - name: Deploy to Firebase Functions (Production)
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       run: |
         echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SAINTFESTCODE }}' > ${HOME}/gcloud-service-key.json
         export GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gcloud-service-key.json
-        npx firebase-tools@latest deploy --project saintfestcode
+        npx firebase-tools@latest deploy --only functions --project saintfestcode
