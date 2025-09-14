@@ -1,38 +1,60 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, Trophy, Download, Share2, Calendar } from 'lucide-react';
-import { Bracket, Saint } from '@/types';
+import {
+  ChakraProvider,
+  Box,
+  Flex,
+  Heading,
+  Text,
+  Button,
+  Spinner,
+  Alert,
+  AlertIcon,
+  VStack
+} from '@chakra-ui/react';
+import { PublishedBracket } from '@/types';
+import { saintfestTheme } from '@/lib/chakra-theme';
 import Navigation from '@/components/Navigation';
+import PublishedBracketDisplay from '@/components/bracket/PublishedBracketDisplay';
 
 export default function PublicBracketPage() {
-  const [brackets, setBrackets] = useState<Bracket[]>([]);
-  const [saints, setSaints] = useState<Record<string, Saint>>({});
+  const [publishedBracket, setPublishedBracket] = useState<PublishedBracket | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedBracket, setSelectedBracket] = useState<Bracket | null>(null);
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    // For demo purposes, show "coming soon" message
-    setLoading(false);
+    loadPublishedBracket();
   }, []);
 
-  const getSaintName = (saintId: string): string => {
-    return saints[saintId]?.name || 'TBD';
+  const loadPublishedBracket = async () => {
+    try {
+      const response = await fetch('/api/bracket/current');
+      const result = await response.json();
+
+      if (result.success) {
+        setPublishedBracket(result.bracket);
+      } else {
+        setError(result.error || 'Failed to load bracket');
+      }
+    } catch (err) {
+      console.error('Failed to load published bracket:', err);
+      setError('Failed to load bracket data');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const downloadBracket = async (bracket: Bracket) => {
+  const downloadBracket = async () => {
+    if (!publishedBracket) return;
     try {
-      const response = await fetch(`/api/brackets/${bracket.id}/pdf`);
+      const response = await fetch(`/api/bracket/published-pdf`);
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `saintfest-${bracket.year}-bracket.pdf`;
+        a.download = `saintfest-${publishedBracket.year}-bracket.pdf`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -40,14 +62,16 @@ export default function PublicBracketPage() {
       }
     } catch (error) {
       console.error('Failed to download bracket:', error);
+      alert('Failed to download bracket. Please try again.');
     }
   };
 
-  const shareBracket = async (bracket: Bracket) => {
-    const url = `${window.location.origin}/bracket/${bracket.id}`;
+  const shareBracket = async () => {
+    if (!publishedBracket) return;
+    const url = `${window.location.origin}/bracket`;
     try {
       await navigator.share({
-        title: `Saintfest ${bracket.year} Bracket`,
+        title: `Saintfest ${publishedBracket.year} Bracket`,
         text: 'Check out this March Madness style saint tournament!',
         url: url,
       });
@@ -60,143 +84,195 @@ export default function PublicBracketPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
+      <ChakraProvider theme={saintfestTheme}>
+        <Box minH="100vh" bg="cream.50" display="flex" alignItems="center" justifyContent="center">
+          <VStack spacing={4}>
+            <Spinner size="xl" color="saintfest.500" thickness="4px" />
+            <Text fontFamily="var(--font-cormorant)" fontSize="lg" color="gray.600">
+              Loading bracket...
+            </Text>
+          </VStack>
+        </Box>
+      </ChakraProvider>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto p-6 text-center">
-        <div className="text-red-600">{error}</div>
-      </div>
+      <ChakraProvider theme={saintfestTheme}>
+        <Box minH="100vh" bg="cream.50" display="flex" alignItems="center" justifyContent="center" p={6}>
+          <Alert status="error" maxW="md" borderRadius="lg">
+            <AlertIcon />
+            <Text>{error}</Text>
+          </Alert>
+        </Box>
+      </ChakraProvider>
     );
   }
 
   return (
-    <div style={{minHeight: '100vh', backgroundColor: '#fffbeb'}}>
-      {/* Green Header Banner - Same as other pages */}
-      <header style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 1000,
-        width: '100%',
-        backgroundColor: '#8FBC8F',
-        padding: '1rem 0',
-        marginBottom: '2rem'
-      }}>
-        <div style={{
-          maxWidth: '64rem',
-          margin: '0 auto',
-          padding: '0 1.5rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <a href="/" style={{
-            fontSize: '2.5rem',
-            fontFamily: 'var(--font-sorts-mill)',
-            color: 'white',
-            textDecoration: 'none',
-            fontWeight: '600',
-            textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-          }}>
-            Saintfest
-          </a>
-          
-          <Navigation />
-        </div>
-      </header>
+    <ChakraProvider theme={saintfestTheme}>
+      <Box minH="100vh" bg="cream.50">
+        {/* Header */}
+        <Box
+          as="header"
+          position="sticky"
+          top={0}
+          zIndex={1000}
+          w="100%"
+          bg="saintfest.500"
+          py={4}
+          mb={8}
+          boxShadow="sm"
+        >
+          <Box maxW="64rem" mx="auto" px={6}>
+            <Flex justify="space-between" align="center">
+              <Heading
+                as="a"
+                href="/"
+                fontSize="4xl"
+                fontFamily="var(--font-sorts-mill)"
+                color="white"
+                textDecoration="none"
+                fontWeight="600"
+                textShadow="0 1px 2px rgba(0,0,0,0.1)"
+                _hover={{ textDecoration: 'none' }}
+              >
+                Saintfest
+              </Heading>
 
-      <main style={{maxWidth: '48rem', margin: '0 auto', padding: '3rem 1.5rem', textAlign: 'center'}}>
-        <div style={{textAlign: 'center', marginBottom: '3rem'}}>
-          <h1 style={{
-            fontSize: '3rem',
-            fontFamily: 'var(--font-sorts-mill)',
-            color: '#374151',
-            marginBottom: '1rem',
-            fontWeight: '600'
-          }}>
-            2025 Saintfest Bracket
-          </h1>
-          <div style={{
-            width: '6rem',
-            height: '1px',
-            backgroundColor: '#d1d5db',
-            margin: '0 auto'
-          }}></div>
-        </div>
+              <Navigation />
+            </Flex>
+          </Box>
+        </Box>
 
-        <h2 style={{
-          fontSize: '2rem',
-          fontFamily: 'var(--font-sorts-mill)',
-          color: '#374151',
-          marginBottom: '1rem',
-          fontWeight: '600'
-        }}>
-          Announcement Coming Soon!
-        </h2>
-        <p style={{
-          fontFamily: 'var(--font-cormorant)',
-          fontSize: '1.125rem',
-          lineHeight: '1.75',
-          color: '#6b7280',
-          marginBottom: '2rem',
-          maxWidth: '32rem',
-          margin: '0 auto 2rem auto'
-        }}>
-          The 2025 Saintfest bracket will be announced on September 14.
-          <br />
-          Until then, explore our community posts and learn about past tournaments!
-        </p>
-        
-        <div style={{
-          display: 'flex',
-          gap: '1rem',
-          justifyContent: 'center',
-          flexWrap: 'wrap'
-        }}>
-          <a href="/posts/" style={{
-            backgroundColor: '#8FBC8F',
-            color: 'white',
-            padding: '0.75rem 1.5rem',
-            borderRadius: '0.375rem',
-            textDecoration: 'none',
-            fontFamily: 'var(--font-league-spartan)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            fontWeight: '600',
-            fontSize: '0.875rem'
-          }}>
-            Read Latest Posts
-          </a>
-        </div>
-      </main>
+        <Box as="main">
+          {publishedBracket ? (
+            <VStack spacing={8}>
+              {/* Clean Bracket Display */}
+              <PublishedBracketDisplay bracket={publishedBracket} />
 
-      <footer style={{
-        borderTop: '1px solid #f3f4f6',
-        padding: '4rem 0',
-        marginTop: '4rem'
-      }}>
-        <div style={{
-          maxWidth: '48rem',
-          margin: '0 auto',
-          padding: '0 1.5rem',
-          textAlign: 'center'
-        }}>
-          <p style={{
-            fontSize: '0.75rem',
-            fontFamily: 'var(--font-league-spartan)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            color: '#9ca3af'
-          }}>
-            © 2024 Saintfest · A celebration of saints through community
-          </p>
-        </div>
-      </footer>
-    </div>
+              {/* Download PDF Button */}
+              <Box textAlign="center" py={8}>
+                <Button
+                  onClick={downloadBracket}
+                  size="lg"
+                  bg="saintfest.500"
+                  color="white"
+                  px={8}
+                  py={4}
+                  fontSize="lg"
+                  fontFamily="var(--font-league-spartan)"
+                  textTransform="uppercase"
+                  letterSpacing="wide"
+                  fontWeight="600"
+                  borderRadius="lg"
+                  boxShadow="lg"
+                  _hover={{
+                    bg: 'saintfest.600',
+                    transform: 'translateY(-2px)',
+                    boxShadow: 'xl'
+                  }}
+                  _active={{
+                    transform: 'translateY(0)'
+                  }}
+                  transition="all 0.2s"
+                >
+                  📄 Download Printable Bracket PDF
+                </Button>
+                <Text
+                  mt={3}
+                  fontSize="sm"
+                  color="gray.500"
+                  fontFamily="var(--font-cormorant)"
+                >
+                  Perfect for printing and filling out your predictions!
+                </Text>
+              </Box>
+            </VStack>
+          ) : (
+            /* Coming Soon Message */
+            <Box textAlign="center" maxW="48rem" mx="auto" px={6} py={12}>
+              <VStack spacing={12}>
+                <VStack spacing={6}>
+                  <Heading
+                    fontSize="5xl"
+                    fontFamily="var(--font-sorts-mill)"
+                    color="gray.700"
+                    fontWeight="600"
+                  >
+                    2025 Saintfest Bracket
+                  </Heading>
+                  <Box w="24" h="1px" bg="gray.300" />
+                </VStack>
 
+                <VStack spacing={6}>
+                  <Heading
+                    fontSize="3xl"
+                    fontFamily="var(--font-sorts-mill)"
+                    color="gray.700"
+                    fontWeight="600"
+                  >
+                    Announcement Coming Soon!
+                  </Heading>
+                  <Text
+                    fontFamily="var(--font-cormorant)"
+                    fontSize="lg"
+                    lineHeight="tall"
+                    color="gray.500"
+                    maxW="32rem"
+                  >
+                    The 2025 Saintfest bracket will be announced soon.
+                    <br />
+                    Until then, explore our community posts and learn about past tournaments!
+                  </Text>
+                </VStack>
+
+                <Button
+                  as="a"
+                  href="/posts/"
+                  bg="saintfest.500"
+                  color="white"
+                  px={6}
+                  py={3}
+                  borderRadius="md"
+                  fontFamily="var(--font-league-spartan)"
+                  textTransform="uppercase"
+                  letterSpacing="wide"
+                  fontWeight="600"
+                  fontSize="sm"
+                  _hover={{
+                    bg: 'saintfest.600',
+                    textDecoration: 'none'
+                  }}
+                >
+                  Read Latest Posts
+                </Button>
+              </VStack>
+            </Box>
+          )}
+        </Box>
+
+        <Box
+          as="footer"
+          borderTop="1px solid"
+          borderColor="gray.200"
+          py={16}
+          mt={16}
+        >
+          <Box maxW="48rem" mx="auto" px={6} textAlign="center">
+            <Text
+              fontSize="xs"
+              fontFamily="var(--font-league-spartan)"
+              textTransform="uppercase"
+              letterSpacing="wide"
+              color="gray.400"
+            >
+              © 2024 Saintfest · A celebration of saints through community
+            </Text>
+          </Box>
+        </Box>
+      </Box>
+    </ChakraProvider>
   );
 }

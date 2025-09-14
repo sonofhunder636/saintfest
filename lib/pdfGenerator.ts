@@ -1,6 +1,6 @@
 // lib/pdfGenerator.ts
 import puppeteer from 'puppeteer';
-import { Bracket } from '@/types';
+import { Bracket, PublishedBracket } from '@/types';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase';
 import React from 'react';
@@ -33,7 +33,7 @@ export async function generateBracketPDF(bracket: Bracket): Promise<PDFGeneratio
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
     // Wait for any images to load
-    await page.waitForTimeout(2000);
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Generate PDF
     const pdfBuffer = await page.pdf({
@@ -408,5 +408,258 @@ function generateBracketLineSVG(): string {
     <line x1="780" y1="160" x2="840" y2="160" class="bracket-line"/>
     <line x1="780" y1="80" x2="780" y2="160" class="bracket-line"/>
     <line x1="740" y1="120" x2="780" y2="120" class="bracket-line"/>
+  `;
+}
+
+export async function generatePublishedBracketPDF(publishedBracket: PublishedBracket): Promise<Buffer> {
+  let browser = null;
+
+  try {
+    // Launch browser with performance optimizations
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor'
+      ]
+    });
+
+    const page = await browser.newPage();
+
+    // Set page size for optimal PDF rendering
+    await page.setViewport({ width: 960, height: 720 });
+
+    // Generate HTML content for the published bracket
+    const htmlContent = generatePublishedBracketHTML(publishedBracket);
+
+    // Set the HTML content
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+    // No wait needed - static HTML content
+
+    // Generate PDF
+    const pdfBuffer = await page.pdf({
+      format: 'letter',
+      landscape: true,
+      margin: {
+        top: '0.3in',
+        bottom: '0.3in',
+        left: '0.3in',
+        right: '0.3in'
+      },
+      printBackground: true,
+      preferCSSPageSize: false,
+      pageRanges: '1' // Ensure single page only
+    });
+
+    return Buffer.from(pdfBuffer);
+
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
+function generatePublishedBracketHTML(bracket: PublishedBracket): string {
+  // Calculate proper scale for 8.5x11 paper (usable area: 960x720px)
+  // Bracket dimensions: 2780x1630px → Target: 960x720px
+  const scale = 0.345;
+
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${bracket.title} Bracket</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant:wght@400;600;700&family=Sorts+Mill+Goudy:ital,wght@0,400;1,400&display=swap');
+
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          font-family: 'Cormorant', serif;
+          background: white;
+          width: 100%;
+          height: 100vh;
+          overflow: hidden;
+          color: #2D3748;
+        }
+
+        .bracket-container {
+          width: ${bracket.dimensions.totalWidth * scale}px;
+          height: ${bracket.dimensions.totalHeight * scale}px;
+          position: relative;
+          margin: 20px auto;
+        }
+
+        .bracket-match {
+          position: absolute;
+          background: white;
+          border: 1px solid #E2E8F0;
+          border-radius: 4px;
+          font-size: ${12 * scale}px;
+        }
+
+        .saint-slot {
+          height: 50%;
+          width: 100%;
+          padding: ${4 * scale}px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 500;
+        }
+
+        .saint-slot.top {
+          border-bottom: 1px solid #E2E8F0;
+        }
+
+        .saint-seed {
+          font-size: ${10 * scale}px;
+          color: #718096;
+          margin-left: ${4 * scale}px;
+        }
+
+        .category-label {
+          position: absolute;
+          width: ${200 * scale}px;
+          height: ${200 * scale}px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid #2D3748;
+          border-radius: 4px;
+          font-family: 'Sorts Mill Goudy', serif;
+          font-weight: bold;
+          font-size: ${16 * scale}px;
+          color: #2D3748;
+        }
+
+        .bracket-title {
+          position: absolute;
+          left: 50%;
+          top: ${50 * scale}px;
+          transform: translateX(-50%);
+          text-align: center;
+          font-family: 'Sorts Mill Goudy', serif;
+          font-weight: bold;
+          font-size: ${48 * scale}px;
+          color: #4A5568;
+          opacity: 0.8;
+        }
+
+        .center-overlay {
+          position: absolute;
+          text-align: center;
+          pointer-events: none;
+          font-family: 'Sorts Mill Goudy', serif;
+          font-weight: bold;
+          font-size: ${48 * scale}px;
+          color: rgba(55, 65, 81, 0.8);
+          opacity: 0.8;
+          line-height: 1.1;
+        }
+
+        .connection-lines {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: 1;
+        }
+
+        .print-footer {
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          text-align: center;
+          font-size: 10px;
+          color: #718096;
+          font-family: 'Sorts Mill Goudy', serif;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="bracket-container">
+
+        <!-- Connection Lines -->
+        <svg class="connection-lines" width="${bracket.dimensions.totalWidth * scale}px" height="${bracket.dimensions.totalHeight * scale}px">
+          ${bracket.connections.map(connection => `
+            <line
+              x1="${connection.x1 * scale}"
+              y1="${connection.y1 * scale}"
+              x2="${connection.x2 * scale}"
+              y2="${connection.y2 * scale}"
+              stroke="#9CA3AF"
+              stroke-width="${connection.strokeWidth * scale}"
+              opacity="0.8"
+            />
+          `).join('')}
+        </svg>
+
+        <!-- Tournament Matches -->
+        ${bracket.matches.map(match => `
+          <div class="bracket-match" style="
+            left: ${match.position.x * scale}px;
+            top: ${match.position.y * scale}px;
+            width: ${match.position.width * scale}px;
+            height: ${match.position.height * scale}px;
+          ">
+            <div class="saint-slot top">
+              ${match.saint1Name || ''}
+            </div>
+            <div class="saint-slot">
+              ${match.saint2Name || ''}
+            </div>
+          </div>
+        `).join('')}
+
+        <!-- Category Labels -->
+        ${bracket.categories.map(category => `
+          <div class="category-label" style="
+            left: ${category.labelPosition.x * scale}px;
+            top: ${category.labelPosition.y * scale}px;
+            background-color: ${category.color || 'rgba(255, 255, 255, 0.9)'};
+          ">
+            ${category.name}
+          </div>
+        `).join('')}
+
+        <!-- Center Overlay -->
+        ${bracket.centerOverlay ? `
+          <div class="center-overlay" style="
+            left: ${bracket.centerOverlay.x * scale}px;
+            top: ${bracket.centerOverlay.y * scale}px;
+            transform: translate(-50%, -50%);
+          ">
+            ${bracket.centerOverlay.text.map(line => `<div>${line}</div>`).join('')}
+          </div>
+        ` : ''}
+
+        <!-- Title -->
+        <div class="bracket-title">
+          ${bracket.title}
+        </div>
+
+      </div>
+
+      <div class="print-footer">
+        Generated from Saintfest ${bracket.year} • Fill in your predictions!
+      </div>
+
+    </body>
+    </html>
   `;
 }
