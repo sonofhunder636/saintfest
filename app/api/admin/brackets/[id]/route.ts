@@ -5,10 +5,11 @@ import { Bracket } from '@/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const bracketRef = doc(db, 'brackets', params.id);
+    const { id } = await params;
+    const bracketRef = doc(db, 'brackets', id);
     const bracketDoc = await getDoc(bracketRef);
 
     if (!bracketDoc.exists()) {

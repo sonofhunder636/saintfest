@@ -239,12 +239,13 @@ St. Nicholas of Myra, pray`,
 // Note: Using client-side rendering to support both static and dynamic posts
 
 interface PostPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
-export default function PostPage({ params }: PostPageProps) {
+export default async function PostPage({ params }: PostPageProps) {
+  const { slug } = await params;
   const [post, setPost] = useState<BlogPost | null>(null);
   const [isDynamicPost, setIsDynamicPost] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -258,7 +259,7 @@ export default function PostPage({ params }: PostPageProps) {
   useEffect(() => {
     const loadPost = async () => {
       // First, try to find the post in historical posts
-      let foundPost = blogPosts.find(p => p.slug === params.slug);
+      let foundPost = blogPosts.find(p => p.slug === slug);
       
       if (foundPost) {
         setPost(foundPost);
@@ -273,7 +274,7 @@ export default function PostPage({ params }: PostPageProps) {
         if (blogResponse.ok) {
           const blogResult = await blogResponse.json();
           if (blogResult.success) {
-            const blogPost = blogResult.posts.find((p: any) => p.slug === params.slug);
+            const blogPost = blogResult.posts.find((p: any) => p.slug === slug);
             if (blogPost) {
               // Convert admin blog post to BlogPost format
               foundPost = {
@@ -299,7 +300,7 @@ export default function PostPage({ params }: PostPageProps) {
 
       // If not found in blog posts, try daily posts (tournament posts)
       try {
-        const response = await fetch(`/api/posts/${params.slug}`);
+        const response = await fetch(`/api/posts/${slug}`);
         if (response.ok) {
           const result = await response.json();
           if (result.success) {
@@ -333,7 +334,7 @@ export default function PostPage({ params }: PostPageProps) {
     };
 
     loadPost();
-  }, [params.slug]);
+  }, [slug]);
 
   // Function to load voting data for dynamic posts
   const loadVotingData = async (postData: DailyPost) => {

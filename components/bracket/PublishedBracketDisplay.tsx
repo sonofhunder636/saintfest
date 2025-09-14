@@ -28,7 +28,7 @@ export default function PublishedBracketDisplay({ bracket }: PublishedBracketDis
         newScale = bracket.dimensions.scales.tablet;
       } else if (containerWidth < bracketWidth) {
         // Custom scale if container is smaller than bracket
-        newScale = Math.max(0.4, (containerWidth - 40) / bracketWidth); // Min 40% scale
+        newScale = Math.max(0.8, (containerWidth - 40) / bracketWidth); // Min 80% scale for readability
       }
 
       setScale(Math.min(newScale, 1)); // Never scale above 100%
@@ -118,26 +118,14 @@ export default function PublishedBracketDisplay({ bracket }: PublishedBracketDis
                   justifyContent="center"
                 >
                   {match.saint1Name ? (
-                    <>
-                      <Text
-                        fontWeight="medium"
-                        color="gray.800"
-                        fontSize={`${12 * scale}px`}
-                        fontFamily="var(--font-cormorant)"
-                      >
-                        {match.saint1Name}
-                      </Text>
-                      {match.saint1Seed && (
-                        <Text
-                          ml={1}
-                          color="gray.500"
-                          fontSize={`${10 * scale}px`}
-                          fontFamily="var(--font-cormorant)"
-                        >
-                          ({match.saint1Seed})
-                        </Text>
-                      )}
-                    </>
+                    <Text
+                      fontWeight="medium"
+                      color="gray.800"
+                      fontSize={`${12 * scale}px`}
+                      fontFamily="var(--font-cormorant)"
+                    >
+                      {match.saint1Name}
+                    </Text>
                   ) : (
                     <Box />
                   )}
@@ -154,26 +142,14 @@ export default function PublishedBracketDisplay({ bracket }: PublishedBracketDis
                   justifyContent="center"
                 >
                   {match.saint2Name ? (
-                    <>
-                      <Text
-                        fontWeight="medium"
-                        color="gray.800"
-                        fontSize={`${12 * scale}px`}
-                        fontFamily="var(--font-cormorant)"
-                      >
-                        {match.saint2Name}
-                      </Text>
-                      {match.saint2Seed && (
-                        <Text
-                          ml={1}
-                          color="gray.500"
-                          fontSize={`${10 * scale}px`}
-                          fontFamily="var(--font-cormorant)"
-                        >
-                          ({match.saint2Seed})
-                        </Text>
-                      )}
-                    </>
+                    <Text
+                      fontWeight="medium"
+                      color="gray.800"
+                      fontSize={`${12 * scale}px`}
+                      fontFamily="var(--font-cormorant)"
+                    >
+                      {match.saint2Name}
+                    </Text>
                   ) : (
                     <Box />
                   )}

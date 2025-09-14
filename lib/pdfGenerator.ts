@@ -451,7 +451,8 @@ export async function generatePublishedBracketPDF(publishedBracket: PublishedBra
         right: '0.3in'
       },
       printBackground: true,
-      preferCSSPageSize: false
+      preferCSSPageSize: false,
+      pageRanges: '1' // Ensure single page only
     });
 
     return Buffer.from(pdfBuffer);
@@ -503,9 +504,8 @@ function generatePublishedBracketHTML(bracket: PublishedBracket): string {
         .bracket-match {
           position: absolute;
           background: white;
-          border: 1px solid #CBD5E0;
+          border: 1px solid #E2E8F0;
           border-radius: 4px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           font-size: ${12 * scale}px;
         }
 
@@ -536,9 +536,8 @@ function generatePublishedBracketHTML(bracket: PublishedBracket): string {
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 1px solid #CBD5E0;
+          border: 2px solid #2D3748;
           border-radius: 4px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           font-family: 'Sorts Mill Goudy', serif;
           font-weight: bold;
           font-size: ${16 * scale}px;
@@ -619,16 +618,10 @@ function generatePublishedBracketHTML(bracket: PublishedBracket): string {
             height: ${match.position.height * scale}px;
           ">
             <div class="saint-slot top">
-              ${match.saint1Name ? `
-                ${match.saint1Name}
-                ${match.saint1Seed ? `<span class="saint-seed">(${match.saint1Seed})</span>` : ''}
-              ` : ''}
+              ${match.saint1Name || ''}
             </div>
             <div class="saint-slot">
-              ${match.saint2Name ? `
-                ${match.saint2Name}
-                ${match.saint2Seed ? `<span class="saint-seed">(${match.saint2Seed})</span>` : ''}
-              ` : ''}
+              ${match.saint2Name || ''}
             </div>
           </div>
         `).join('')}

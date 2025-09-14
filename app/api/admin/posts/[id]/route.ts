@@ -6,10 +6,11 @@ import { BlogPost } from '../route';
 // GET - Get single post
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const docRef = doc(db, 'posts', params.id);
+    const { id } = await params;
+    const docRef = doc(db, 'posts', id);
     const docSnap = await getDoc(docRef);
     
     if (!docSnap.exists()) {
@@ -46,11 +47,12 @@ export async function GET(
 // PUT - Update post
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
-    console.log('PUT /api/admin/posts/[id] - Received body for ID:', params.id, JSON.stringify(body, null, 2));
+    console.log('PUT /api/admin/posts/[id] - Received body for ID:', id, JSON.stringify(body, null, 2));
     
     const { 
       title, 
@@ -86,11 +88,11 @@ export async function PUT(
       );
     }
 
-    const docRef = doc(db, 'posts', params.id);
+    const docRef = doc(db, 'posts', id);
     const docSnap = await getDoc(docRef);
-    
+
     if (!docSnap.exists()) {
-      console.log('Post not found for ID:', params.id);
+      console.log('Post not found for ID:', id);
       return NextResponse.json(
         { success: false, error: 'Post not found' },
         { status: 404 }
@@ -140,17 +142,17 @@ export async function PUT(
       updateData.publishedAt = new Date();
     }
 
-    console.log('Updating post with data:', { 
-      id: params.id, 
-      title: updateData.title, 
-      slug: updateData.slug, 
+    console.log('Updating post with data:', {
+      id: id,
+      title: updateData.title,
+      slug: updateData.slug,
       status: updateData.status,
       hasScheduledFor: !!updateData.scheduledFor,
       hasScheduledAt: !!updateData.scheduledAt
     });
 
     await updateDoc(docRef, updateData);
-    console.log('Post updated successfully:', params.id);
+    console.log('Post updated successfully:', id);
     
     // Get updated document
     const updatedDoc = await getDoc(docRef);
@@ -171,8 +173,9 @@ export async function PUT(
     });
 
   } catch (error: any) {
+    const { id: postId } = await params;
     console.error('Error updating post - Full error details:', {
-      postId: params?.id,
+      postId: postId,
       message: error.message,
       code: error.code,
       stack: error.stack,
@@ -188,10 +191,11 @@ export async function PUT(
 // DELETE - Delete post
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const docRef = doc(db, 'posts', params.id);
+    const { id } = await params;
+    const docRef = doc(db, 'posts', id);
     const docSnap = await getDoc(docRef);
     
     if (!docSnap.exists()) {
