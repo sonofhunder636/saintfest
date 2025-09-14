@@ -9,10 +9,11 @@ import { Loader2, Trophy, ArrowLeft, Download, Eye } from 'lucide-react';
 import { Bracket, Saint } from '@/types';
 
 interface BracketViewPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default function BracketViewPage({ params }: BracketViewPageProps) {
+export default async function BracketViewPage({ params }: BracketViewPageProps) {
+  const { id } = await params;
   const { currentUser, loading } = useRequireAuth('admin');
   const [bracket, setBracket] = useState<Bracket | null>(null);
   const [saints, setSaints] = useState<Record<string, Saint>>({});
@@ -20,15 +21,15 @@ export default function BracketViewPage({ params }: BracketViewPageProps) {
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    if (params.id) {
+    if (id) {
       loadBracket();
       loadSaints();
     }
-  }, [params.id]);
+  }, [id]);
 
   const loadBracket = async () => {
     try {
-      const response = await fetch(`/api/admin/brackets/${params.id}`);
+      const response = await fetch(`/api/admin/brackets/${id}`);
       const result = await response.json();
 
       if (result.success) {

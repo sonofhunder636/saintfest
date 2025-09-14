@@ -7,10 +7,11 @@ import { DailyPost } from '@/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const postId = params.id;
+    const { id } = await params;
+    const postId = id;
     
     const postRef = doc(db, 'dailyPosts', postId);
     const postDoc = await getDoc(postRef);
@@ -59,10 +60,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const postId = params.id;
+    const { id } = await params;
+    const postId = id;
     const updateData = await request.json();
     
     // TODO: Add admin authentication check
@@ -139,10 +141,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const postId = params.id;
+    const { id } = await params;
+    const postId = id;
     
     // TODO: Add admin authentication check
     

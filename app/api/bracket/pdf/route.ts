@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Return PDF as response
-    return new Response(pdfBuffer, {
+    return new Response(pdfBuffer.buffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${bracket.title.replace(/\s+/g, '_')}_Bracket.pdf"`,

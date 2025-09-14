@@ -5,6 +5,9 @@ import { notFound } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DailyPost, Saint, VotingSession } from "@/types";
 import VotingWidget from "@/components/voting/VotingWidget";
+import Navigation from "@/components/Navigation";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface BlogPost {
   id: string;
@@ -236,12 +239,13 @@ St. Nicholas of Myra, pray`,
 // Note: Using client-side rendering to support both static and dynamic posts
 
 interface PostPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
-export default function PostPage({ params }: PostPageProps) {
+export default async function PostPage({ params }: PostPageProps) {
+  const { slug } = await params;
   const [post, setPost] = useState<BlogPost | null>(null);
   const [isDynamicPost, setIsDynamicPost] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -255,7 +259,7 @@ export default function PostPage({ params }: PostPageProps) {
   useEffect(() => {
     const loadPost = async () => {
       // First, try to find the post in historical posts
-      let foundPost = blogPosts.find(p => p.slug === params.slug);
+      let foundPost = blogPosts.find(p => p.slug === slug);
       
       if (foundPost) {
         setPost(foundPost);
@@ -264,9 +268,39 @@ export default function PostPage({ params }: PostPageProps) {
         return;
       }
 
-      // If not found in historical posts, try to fetch from API (dynamic posts)
+      // If not found in historical posts, try to fetch from blog posts API first
       try {
-        const response = await fetch(`/api/posts/${params.slug}`);
+        const blogResponse = await fetch('/api/admin/posts');
+        if (blogResponse.ok) {
+          const blogResult = await blogResponse.json();
+          if (blogResult.success) {
+            const blogPost = blogResult.posts.find((p: any) => p.slug === slug);
+            if (blogPost) {
+              // Convert admin blog post to BlogPost format
+              foundPost = {
+                id: blogPost.id,
+                title: blogPost.title,
+                date: blogPost.publishedAt 
+                  ? new Date(blogPost.publishedAt).toISOString().split('T')[0] 
+                  : new Date(blogPost.createdAt).toISOString().split('T')[0],
+                excerpt: blogPost.excerpt || blogPost.content.substring(0, 200) + (blogPost.content.length > 200 ? '...' : ''),
+                content: blogPost.content,
+                slug: blogPost.slug
+              };
+              setPost(foundPost);
+              setIsDynamicPost(false); // Blog posts don't have voting
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching blog post:', error);
+      }
+
+      // If not found in blog posts, try daily posts (tournament posts)
+      try {
+        const response = await fetch(`/api/posts/${slug}`);
         if (response.ok) {
           const result = await response.json();
           if (result.success) {
@@ -300,7 +334,7 @@ export default function PostPage({ params }: PostPageProps) {
     };
 
     loadPost();
-  }, [params.slug]);
+  }, [slug]);
 
   // Function to load voting data for dynamic posts
   const loadVotingData = async (postData: DailyPost) => {
@@ -437,50 +471,7 @@ export default function PostPage({ params }: PostPageProps) {
           </Link>
           
           {/* Navigation */}
-          <nav style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-            <Link href="/bracket" style={{
-              fontSize: '0.875rem',
-              fontFamily: 'var(--font-league-spartan)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              color: 'white',
-              textDecoration: 'none',
-              fontWeight: '500',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.25rem',
-              backgroundColor: 'rgba(255,255,255,0.1)'
-            }}>
-              2025 Saintfest Bracket
-            </Link>
-            <Link href="/about" style={{
-              fontSize: '0.875rem',
-              fontFamily: 'var(--font-league-spartan)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              color: 'white',
-              textDecoration: 'none',
-              fontWeight: '500',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.25rem',
-              backgroundColor: 'rgba(255,255,255,0.1)'
-            }}>
-              About
-            </Link>
-            <Link href="/posts" style={{
-              fontSize: '0.875rem',
-              fontFamily: 'var(--font-league-spartan)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              color: 'white',
-              textDecoration: 'none',
-              fontWeight: '500',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.25rem',
-              backgroundColor: 'rgba(255,255,255,0.3)'
-            }}>
-              Posts
-            </Link>
-          </nav>
+          <Navigation />
         </div>
       </header>
 
@@ -542,15 +533,26 @@ export default function PostPage({ params }: PostPageProps) {
             color: '#374151',
             marginBottom: '3rem'
           }}>
-            {post.content.split('\n').map((paragraph, index) => (
-              <p 
-                key={index} 
-                style={{marginBottom: '1.5rem'}}
-                dangerouslySetInnerHTML={{
-                  __html: formatTextContent(paragraph)
-                }}
-              />
-            ))}
+            {/* Check if content looks like Markdown (contains # or **) */}
+            {post.content.includes('#') || post.content.includes('**') || post.content.includes('*') ? (
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                className="prose prose-lg prose-green max-w-none"
+              >
+                {post.content}
+              </ReactMarkdown>
+            ) : (
+              /* Legacy plain text content with basic formatting */
+              post.content.split('\n').map((paragraph, index) => (
+                <p 
+                  key={index} 
+                  style={{marginBottom: '1.5rem'}}
+                  dangerouslySetInnerHTML={{
+                    __html: formatTextContent(paragraph)
+                  }}
+                />
+              ))
+            )}
           </div>
 
           {/* Voting Widget for Dynamic Posts */}

@@ -4,10 +4,11 @@ import { db } from '@/lib/firebase';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const saintRef = doc(db, 'saints', params.id);
+    const { id } = await params;
+    const saintRef = doc(db, 'saints', id);
     
     // Check if saint exists
     const saintDoc = await getDoc(saintRef);
@@ -39,12 +40,13 @@ export async function DELETE(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const updates = await request.json();
-    
-    const saintRef = doc(db, 'saints', params.id);
+
+    const saintRef = doc(db, 'saints', id);
     
     // Check if saint exists
     const saintDoc = await getDoc(saintRef);
