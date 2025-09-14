@@ -1,4 +1,16 @@
 {
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    }
+  ],
   "hosting": {
     "public": "out",
     "ignore": [
@@ -7,6 +19,18 @@
       "**/node_modules/**"
     ],
     "rewrites": [
+      {
+        "source": "/api/**",
+        "function": "nextjsFunc"
+      },
+      {
+        "source": "/admin/**",
+        "function": "nextjsFunc"
+      },
+      {
+        "source": "/auth/**",
+        "function": "nextjsFunc"
+      },
       {
         "source": "**",
         "destination": "/index.html"

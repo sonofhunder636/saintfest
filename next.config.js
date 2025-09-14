@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Server-side rendering with Firebase Functions
+  // Configure for Firebase Functions deployment
   trailingSlash: true,
   typescript: {
     // Temporarily ignore build errors for deployment
