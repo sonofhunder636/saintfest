@@ -1,5 +1,7 @@
 import * as functions from 'firebase-functions';
 import { onRequest } from 'firebase-functions/v2/https';
+import type { Request } from 'firebase-functions/v2/https';
+import type { Response } from 'express';
 
 // Import Next.js app
 const next = require('next');
@@ -27,7 +29,7 @@ export const nextjsFunc = onRequest(
     timeoutSeconds: 60,
     maxInstances: 10,
   },
-  async (request, response) => {
+  async (request: Request, response: Response) => {
     try {
       // Prepare Next.js if not ready
       if (!nextjsServer.isReady) {

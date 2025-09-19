@@ -7,7 +7,7 @@
     "dev:static": "npm run build && cd out && python3 -m http.server 8000",
     "build": "next build",
     "build:firebase": "npm run build && npm run copy-to-functions",
-    "copy-to-functions": "cp -r .next functions/ && cp next.config.js functions/ && cp tsconfig.json functions/ && cp -r app functions/ && cp -r components functions/ && cp -r lib functions/ && cp -r types functions/ && cp -r contexts functions/ && cp -r hooks functions/ && cp -r data functions/ && cp -r public functions/ || true",
+    "copy-to-functions": "cp -r .next functions/ && cp next.config.js functions/ && cp -r app functions/ && cp -r components functions/ && cp -r lib functions/ && cp -r types functions/ && cp -r contexts functions/ && cp -r hooks functions/ && cp -r data functions/ && cp -r public functions/ || true",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit"
@@ -45,6 +45,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.0.0",
     "firebase": "^9.23.0",
+    "firebase-admin": "^13.5.0",
     "framer-motion": "^12.23.12",
     "jimp": "^1.6.0",
     "js-cookie": "^3.0.5",
