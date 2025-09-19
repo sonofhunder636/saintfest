@@ -5,6 +5,14 @@ import { Bracket } from '@/types';
 
 export async function GET(request: NextRequest) {
   try {
+    // Check Firebase connection
+    if (!db) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database connection not available'
+      }, { status: 503 });
+    }
+
     const bracketsCollection = collection(db, 'brackets');
     const bracketsQuery = query(bracketsCollection, orderBy('year', 'desc'));
     

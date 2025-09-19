@@ -223,7 +223,7 @@ async function flattenTournament(
     x2: connection.x2,
     y2: connection.y2,
     strokeWidth: connection.strokeWidth,
-    color: connection.color // Falls back to colorPalette.lines in display
+    color: undefined // Will fall back to colorPalette.lines in display
   }));
 
   // Create center overlay for "Blessed Intercessor"

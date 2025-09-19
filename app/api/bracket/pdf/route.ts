@@ -7,6 +7,14 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check Firebase connection
+    if (!db) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database connection not available'
+      }, { status: 503 });
+    }
+
     const { bracketId } = await request.json();
 
     if (!bracketId) {
@@ -32,7 +40,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Return PDF as response
-    return new Response(pdfBuffer.buffer, {
+    return new Response(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${bracket.title.replace(/\s+/g, '_')}_Bracket.pdf"`,
@@ -51,6 +59,14 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Check Firebase connection
+    if (!db) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database connection not available'
+      }, { status: 503 });
+    }
+
     const { searchParams } = new URL(request.url);
     const bracketId = searchParams.get('bracketId');
 

@@ -5,6 +5,14 @@ import { collection, doc, getDoc, updateDoc, deleteDoc, writeBatch } from 'fireb
 // POST - Bulk operations (update status, delete multiple posts)
 export async function POST(request: NextRequest) {
   try {
+    // Check Firebase connection
+    if (!db) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database connection not available'
+      }, { status: 503 });
+    }
+
     const body = await request.json();
     const { action, postIds, data } = body;
     

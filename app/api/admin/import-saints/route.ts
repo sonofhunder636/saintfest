@@ -5,6 +5,14 @@ import { Saint } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check Firebase connection
+    if (!db) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database connection not available'
+      }, { status: 503 });
+    }
+
     const { googleSheetsUrl } = await request.json();
 
     if (!googleSheetsUrl) {
