@@ -2,17 +2,18 @@
 const nextConfig = {
   // Configure for Firebase Functions deployment
   trailingSlash: true,
+  // Remove ignore flags since we fixed TypeScript errors
   typescript: {
-    // Temporarily ignore build errors for deployment
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   eslint: {
-    // Temporarily ignore eslint errors for deployment
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   images: {
     unoptimized: true,
   },
+  // Configure for serverless deployment
+  output: 'standalone',
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {

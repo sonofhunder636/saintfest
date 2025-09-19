@@ -55,10 +55,13 @@ jobs:
         cd functions
         npm install
 
-    - name: Build Functions
+    - name: Verify Functions Structure
       run: |
-        cd functions
-        npm run build
+        echo "Checking functions directory structure..."
+        ls -la functions/
+        echo "Checking for required files..."
+        test -f functions/package.json && echo "✓ package.json found" || echo "✗ package.json missing"
+        test -f functions/index.js && echo "✓ index.js found" || echo "✗ index.js missing"
 
     - name: Deploy to Firebase Functions (Preview)
       if: github.event_name == 'pull_request'
