@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       // Create a deterministic ID based on the saint's name
       const saintId = saintName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
       
-      const saintData: any = {
+      const saintData: Partial<Saint> = {
         id: saintId,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),

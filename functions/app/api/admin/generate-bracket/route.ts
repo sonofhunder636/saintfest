@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     console.log(`Generating 32-saint tournament for ${year} with 4 categories:`, categories);
 
     // Fetch all saints with proper error handling
-    let allSaints: Saint[] = [];
+    const allSaints: Saint[] = [];
     try {
       const saintsCollection = collection(db, 'saints');
       const allSaintsSnapshot = await getDocs(saintsCollection);

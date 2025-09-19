@@ -10,7 +10,7 @@
     "build:firebase": "npm run build && npm run copy-to-functions",
     "copy-to-functions": "cp -r .next functions/ && cp next.config.js functions/ && cp -r app functions/ && cp -r components functions/ && cp -r lib functions/ && cp -r types functions/ && cp -r contexts functions/ && cp -r hooks functions/ && cp -r data functions/ && cp -r public functions/ && cp package.json functions/package-root.json || true",
     "start": "next start",
-    "lint": "eslint . --fix",
+    "lint": "eslint \"app/**/*.{js,jsx,ts,tsx}\" \"components/**/*.{js,jsx,ts,tsx}\" \"lib/**/*.{js,jsx,ts,tsx}\" \"contexts/**/*.{js,jsx,ts,tsx}\" \"hooks/**/*.{js,jsx,ts,tsx}\" \"types/**/*.{js,jsx,ts,tsx}\" --fix",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

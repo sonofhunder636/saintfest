@@ -369,7 +369,7 @@ export default function SaintsManagerPage() {
                     <label key={category} className="flex items-center space-x-2">
                       <input
                         type="checkbox"
-                        checked={!!(editFormData as any)[category]}
+                        checked={!!(editFormData as Record<string, boolean>)[category]}
                         onChange={(e) => setEditFormData({
                           ...editFormData,
                           [category]: e.target.checked
