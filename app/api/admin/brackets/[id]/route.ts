@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { Bracket } from '@/types';
 
 // Prevent this route from being executed during build
@@ -28,13 +28,8 @@ export async function GET(
       }, { status: 503 });
     }
 
-    // Firebase availability check
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    // Initialize Firestore with runtime assertion
+    const db = assertFirestore();
 
     const { id } = await params;
     const bracketRef = doc(db, 'brackets', id);

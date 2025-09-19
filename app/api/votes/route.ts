@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, doc, setDoc, getDocs, query, where, orderBy, updateDoc, getDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { SimpleVote, VotingSession } from '@/types';
 import crypto from 'crypto';
 
@@ -20,13 +20,7 @@ function isWithinVotingHours(): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check Firebase connection
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    const db = assertFirestore();
 
     if (!isWithinVotingHours()) {
       return NextResponse.json(
@@ -143,13 +137,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Check Firebase connection
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    const db = assertFirestore();
 
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('sessionId');

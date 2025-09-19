@@ -2,7 +2,7 @@
 import puppeteer from 'puppeteer';
 import { Bracket, PublishedBracket } from '@/types';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
+import { assertStorage } from '@/lib/firebase';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
@@ -50,6 +50,7 @@ export async function generateBracketPDF(bracket: Bracket): Promise<PDFGeneratio
     });
 
     // Upload to Firebase Storage
+    const storage = assertStorage();
     const fileName = `brackets/${bracket.year}/${bracket.id}.pdf`;
     const storageRef = ref(storage, fileName);
     

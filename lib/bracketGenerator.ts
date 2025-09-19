@@ -9,7 +9,7 @@ import {
   BracketGenerationConfig,
   BracketColorPalette
 } from '@/types';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 
 // Default color palette that complements mint green
@@ -76,6 +76,7 @@ export class BracketGenerator {
   }
 
   private async loadSaints(): Promise<void> {
+    const db = assertFirestore();
     const saintsRef = collection(db, 'saints');
     const snapshot = await getDocs(saintsRef);
     

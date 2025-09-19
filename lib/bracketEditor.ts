@@ -6,7 +6,7 @@ import {
   BracketEditAction,
   Saint 
 } from '@/types';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { BracketGenerator } from './bracketGenerator';
 
@@ -20,6 +20,7 @@ export class BracketEditor {
 
   async initialize(): Promise<void> {
     // Load all saints for editing operations
+    const db = assertFirestore();
     const saintsRef = collection(db, 'saints');
     const snapshot = await getDocs(saintsRef);
     

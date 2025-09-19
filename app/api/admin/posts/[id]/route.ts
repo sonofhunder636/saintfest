@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { BlogPost } from '../route';
 
@@ -14,13 +14,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check Firebase connection
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    const db = assertFirestore();
 
     const { id } = await params;
     const docRef = doc(db, 'posts', id);
@@ -63,13 +57,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check Firebase connection
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    const db = assertFirestore();
 
     const { id } = await params;
     const body = await request.json();
@@ -215,13 +203,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check Firebase connection
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    const db = assertFirestore();
 
     const { id } = await params;
     const docRef = doc(db, 'posts', id);

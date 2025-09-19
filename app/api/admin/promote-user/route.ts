@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { validateAdminAccess } from '@/lib/auth-middleware';
 
 // SECURITY: This endpoint is now protected and should only be used in emergencies
 // Regular admin access is controlled through the email whitelist in AuthContext.tsx
 export async function POST(request: NextRequest) {
   try {
+    const db = assertFirestore();
     // Validate admin authentication first
     const authResult = await validateAdminAccess(request);
     if (!authResult.isValid) {

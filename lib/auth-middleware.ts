@@ -116,7 +116,7 @@ export function createAdminAuthError(message?: string): NextResponse {
       success: false,
       error: message || 'Admin authentication required',
       requiresAuth: true,
-      adminEmail: ADMIN_EMAIL
+      adminEmails: ADMIN_EMAILS
     },
     { status: 401 }
   );

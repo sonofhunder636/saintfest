@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { collection, doc, addDoc, updateDoc, getDocs, getDoc, query, where, orderBy, limit, startAfter, deleteDoc } from 'firebase/firestore';
 import { headers } from 'next/headers';
 import { validateAdminAccess } from '@/lib/auth-middleware';
@@ -62,13 +62,8 @@ export async function GET(request: NextRequest) {
       }, { status: 503 });
     }
 
-    // Firebase availability check
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    // Initialize Firestore with runtime assertion
+    const db = assertFirestore();
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -159,6 +154,7 @@ export async function GET(request: NextRequest) {
 // POST - Create new post
 export async function POST(request: NextRequest) {
   try {
+    const db = assertFirestore();
     // Validate admin authentication first
     const authResult = await validateAdminAccess(request);
     if (!authResult.isValid) {

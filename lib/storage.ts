@@ -1,5 +1,5 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage } from './firebase';
+import { assertStorage } from './firebase';
 
 export interface ImageUploadResult {
   url: string;
@@ -23,6 +23,7 @@ export async function uploadPostImage(file: File, postId?: string): Promise<Imag
   
   try {
     // Upload file to Firebase Storage
+    const storage = assertStorage();
     const storageRef = ref(storage, path);
     const snapshot = await uploadBytes(storageRef, file);
     
@@ -42,6 +43,7 @@ export async function uploadPostImage(file: File, postId?: string): Promise<Imag
 
 export async function deletePostImage(path: string): Promise<void> {
   try {
+    const storage = assertStorage();
     const storageRef = ref(storage, path);
     await deleteObject(storageRef);
   } catch (error) {

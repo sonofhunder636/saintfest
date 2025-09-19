@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, getDocs, query, where, doc, setDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { Saint, Bracket, BracketRound, BracketMatch } from '@/types';
 import { validateAdminAccess } from '@/lib/auth-middleware';
 
@@ -41,13 +41,8 @@ export async function POST(request: NextRequest) {
       }, { status: 503 });
     }
 
-    // Firebase availability check
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    // Initialize Firestore with runtime assertion
+    const db = assertFirestore();
 
     let requestData;
     try {

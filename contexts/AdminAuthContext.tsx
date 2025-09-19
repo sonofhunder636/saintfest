@@ -8,7 +8,7 @@ import {
   GoogleAuthProvider,
   signOut as firebaseSignOut
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { assertAuth } from '@/lib/firebase';
 import { User } from '@/types';
 
 interface AdminAuthContextType {
@@ -56,6 +56,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
 
   const signInWithGoogle = async () => {
     try {
+      const auth = assertAuth();
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
@@ -79,6 +80,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
 
   const signOut = async () => {
     try {
+      const auth = assertAuth();
       await firebaseSignOut(auth);
       setAdminUser(null);
     } catch (error) {
@@ -90,7 +92,12 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
   const clearSession = () => {
     setAdminUser(null);
     // Force sign out from Firebase as well
-    firebaseSignOut(auth).catch(console.error);
+    try {
+      const auth = assertAuth();
+      firebaseSignOut(auth).catch(console.error);
+    } catch (error) {
+      console.error('Error during clearSession:', error);
+    }
   };
 
   useEffect(() => {
@@ -99,6 +106,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       setLoading(false);
     }, 5000);
 
+    const auth = assertAuth();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       clearTimeout(timeout);
       

@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { Bracket } from '@/types';
 
 export async function GET(request: NextRequest) {
   try {
-    // Check Firebase connection
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    const db = assertFirestore();
 
     const bracketsCollection = collection(db, 'brackets');
     const bracketsQuery = query(bracketsCollection, orderBy('year', 'desc'));

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, getDocs, doc, setDoc, query, orderBy, where, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { DailyPost } from '@/types';
 
 export async function GET(request: NextRequest) {
   try {
+    const db = assertFirestore();
     const { searchParams } = new URL(request.url);
     const published = searchParams.get('published');
     const year = searchParams.get('year') || new Date().getFullYear().toString();
@@ -71,6 +72,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const db = assertFirestore();
     const postData = await request.json();
     
     // TODO: Add admin authentication check

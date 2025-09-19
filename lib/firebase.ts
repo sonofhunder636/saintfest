@@ -55,6 +55,28 @@ try {
   storage = null;
 }
 
+// Runtime assertion helpers for API routes
+export function assertFirestore(): Firestore {
+  if (!db) {
+    throw new Error('Firestore not initialized. Check Firebase configuration.');
+  }
+  return db;
+}
+
+export function assertAuth(): Auth {
+  if (!auth) {
+    throw new Error('Auth not initialized. Check Firebase configuration.');
+  }
+  return auth;
+}
+
+export function assertStorage(): FirebaseStorage {
+  if (!storage) {
+    throw new Error('Storage not initialized. Check Firebase configuration.');
+  }
+  return storage;
+}
+
 // Export with null checks
 export { db, auth, storage };
 export default app;

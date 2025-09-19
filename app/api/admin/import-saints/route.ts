@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { Saint } from '@/types';
 import { validateAdminAccess } from '@/lib/auth-middleware';
 
@@ -21,13 +21,8 @@ export async function POST(request: NextRequest) {
 
     console.log(`Admin authenticated: ${authResult.userEmail} importing saints`);
 
-    // Check Firebase connection
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    // Initialize Firestore with runtime assertion
+    const db = assertFirestore();
 
     const { googleSheetsUrl } = await request.json();
 
