@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { Saint } from '@/types';
 import * as ExcelJS from 'exceljs';
 import { validateAdminAccess } from '@/lib/auth-middleware';
@@ -144,6 +144,7 @@ export async function POST(request: NextRequest) {
     console.log(`Processed ${saintsToImport.length} valid saints from ${dataRows.length} rows`);
 
     // Import saints to Firestore in batches
+    const db = assertFirestore();
     const saintsCollection = collection(db, 'saints');
     const batchSize = 500;
     const batches = [];

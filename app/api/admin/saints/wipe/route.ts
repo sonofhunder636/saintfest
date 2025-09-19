@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, getDocs, writeBatch } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { validateAdminAccess } from '@/lib/auth-middleware';
 
 export async function DELETE(request: NextRequest) {
@@ -20,7 +20,8 @@ export async function DELETE(request: NextRequest) {
 
     console.log(`CRITICAL: Admin ${authResult.userEmail} attempting to wipe saints database at ${new Date().toISOString()}`);
     console.log('Starting saints database wipe...');
-    
+
+    const db = assertFirestore();
     const saintsCollection = collection(db, 'saints');
     const snapshot = await getDocs(saintsCollection);
     

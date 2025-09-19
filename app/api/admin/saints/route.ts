@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { Saint } from '@/types';
 
 // Prevent this route from being executed during build
@@ -25,13 +25,8 @@ export async function GET(request: NextRequest) {
       }, { status: 503 });
     }
 
-    // Firebase availability check
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    // Initialize Firestore with runtime assertion
+    const db = assertFirestore();
 
     const saintsCollection = collection(db, 'saints');
     const saintsQuery = query(saintsCollection, orderBy('name'));

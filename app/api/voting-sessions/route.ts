@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, doc, setDoc, getDoc, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { VotingSession, DailyPost } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
+    const db = assertFirestore();
     const { postId } = await request.json();
     
     if (!postId) {
@@ -110,6 +111,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const db = assertFirestore();
     const { searchParams } = new URL(request.url);
     const postId = searchParams.get('postId');
     

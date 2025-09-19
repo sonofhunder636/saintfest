@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { BlogPost } from '../route';
 
 // GET - Get blog statistics and metrics
 export async function GET(request: NextRequest) {
   try {
+    const db = assertFirestore();
     // Get all posts for statistics
     const postsRef = collection(db, 'posts');
     const postsSnapshot = await getDocs(postsRef);

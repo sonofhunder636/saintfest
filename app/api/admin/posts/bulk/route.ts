@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { collection, doc, getDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 
 // POST - Bulk operations (update status, delete multiple posts)
 export async function POST(request: NextRequest) {
   try {
-    // Check Firebase connection
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    const db = assertFirestore();
 
     const body = await request.json();
     const { action, postIds, data } = body;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { doc, getDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { DailyPost } from '@/types';
 
 // Removed dynamic export as it's not needed without output: 'export'"
@@ -10,6 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const db = assertFirestore();
     const { id } = await params;
     const postId = id;
     
@@ -63,6 +64,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const db = assertFirestore();
     const { id } = await params;
     const postId = id;
     const updateData = await request.json();
@@ -144,6 +146,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const db = assertFirestore();
     const { id } = await params;
     const postId = id;
     

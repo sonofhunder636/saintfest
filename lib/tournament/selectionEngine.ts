@@ -7,7 +7,7 @@ import {
   TournamentConfig,
   TournamentColors 
 } from '@/types';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 
 // Default color palette that complements mint green theme
@@ -115,6 +115,7 @@ export class TournamentSelectionEngine {
    */
   async loadSaints(): Promise<void> {
     try {
+      const db = assertFirestore();
       const saintsRef = collection(db, 'saints');
       const snapshot = await getDocs(saintsRef);
       

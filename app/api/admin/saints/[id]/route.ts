@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { doc, deleteDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 
 // Prevent this route from being executed during build
 export const runtime = 'nodejs';
@@ -12,6 +12,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const db = assertFirestore();
     const { id } = await params;
     const saintRef = doc(db, 'saints', id);
     
@@ -48,6 +49,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const db = assertFirestore();
     const { id } = await params;
     const updates = await request.json();
 

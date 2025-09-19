@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 
 export async function POST(request: NextRequest) {
   try {
+    const db = assertFirestore();
     // Find all posts that are scheduled and should be published now
     const now = new Date();
     

@@ -2,18 +2,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Bracket } from '@/types';
 import { generateBracketPDF } from '@/lib/pdfGenerator';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 export async function POST(request: NextRequest) {
   try {
-    // Check Firebase connection
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    const db = assertFirestore();
 
     const { bracketId } = await request.json();
 
@@ -59,13 +53,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Check Firebase connection
-    if (!db) {
-      return NextResponse.json({
-        success: false,
-        error: 'Database connection not available'
-      }, { status: 503 });
-    }
+    const db = assertFirestore();
 
     const { searchParams } = new URL(request.url);
     const bracketId = searchParams.get('bracketId');
