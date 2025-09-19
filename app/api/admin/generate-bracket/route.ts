@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     console.log(`Generating 32-saint tournament for ${year} with 4 categories:`, categories);
 
     // Fetch all saints with proper error handling
-    let allSaints: Saint[] = [];
+    const allSaints: Saint[] = [];
     try {
       const saintsCollection = collection(db, 'saints');
       const allSaintsSnapshot = await getDocs(saintsCollection);
@@ -185,7 +185,7 @@ function generateBracketStructure(saints: Saint[], year: number): Omit<Bracket, 
   // Generate first round matches
   const firstRoundMatches: BracketMatch[] = [];
   for (let i = 0; i < size; i += 2) {
-    // @ts-ignore - Temporary fix for deployment
+    // @ts-expect-error - BracketMatch may need winnerId property
     firstRoundMatches.push({
       matchId: `round1_match${i / 2 + 1}`,
       saint1Id: saints[i].id,
@@ -207,7 +207,7 @@ function generateBracketStructure(saints: Saint[], year: number): Omit<Bracket, 
     const matches: BracketMatch[] = [];
     
     for (let i = 0; i < numMatches; i++) {
-      // @ts-ignore - Temporary fix for deployment
+      // @ts-expect-error - BracketMatch may need winnerId property
       matches.push({
         matchId: `round${round}_match${i + 1}`,
         saint1Id: '', // Will be filled when previous round completes

@@ -309,8 +309,8 @@ export class TournamentLayoutEngine {
     const rightCategories = this.tournament.categories.slice(2, 4);
     
     // Find the saint in the same relative position but from right-side categories
-    let saintIndex = 0;
-    let categoryOffset = 0;
+    const saintIndex = 0;
+    const categoryOffset = 0;
     
     // Determine which saint this is based on the match number
     for (let i = 0; i < 2; i++) { // First 2 categories (left side)
