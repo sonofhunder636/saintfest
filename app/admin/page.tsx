@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AdminAuthProvider, useAdminAuth } from '@/contexts/AdminAuthContext';
+import Link from 'next/link';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 
 function AdminContent() {
@@ -85,7 +85,7 @@ function AdminContent() {
               }}>
                 About
               </a>
-              <a href="/posts" style={{
+              <Link href="/posts" style={{
                 fontSize: '0.875rem',
                 fontFamily: 'var(--font-league-spartan)',
                 textTransform: 'uppercase',
@@ -98,7 +98,7 @@ function AdminContent() {
                 backgroundColor: 'rgba(255,255,255,0.1)'
               }}>
                 Posts
-              </a>
+              </Link>
             </nav>
           </div>
         </div>
