@@ -94,8 +94,8 @@ export async function POST(request: NextRequest) {
       
       const saintData: Partial<Saint> = {
         id: saintId,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       // Map CSV columns to saint properties
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
           case 'oldtestament':
             // Store using the original header name as the field name
             const originalCategoryName = header.toLowerCase().replace(/\s+/g, '').replace(/\//g, '');
-            saintData[originalCategoryName] = value.toLowerCase() === 'true';
+            (saintData as any)[originalCategoryName] = value.toLowerCase() === 'true';
             break;
         }
       });
