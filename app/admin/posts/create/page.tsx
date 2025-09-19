@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Saint, DailyPost } from '@/types';
+import { Saint } from '@/types';
 
 interface SaintOption {
   id: string;
@@ -28,7 +27,7 @@ export default function CreatePostPage() {
   const [bracketRound, setBracketRound] = useState<'round1' | 'round2' | 'semifinals' | 'finals'>('round1');
   const [publishDate, setPublishDate] = useState('');
   const [isPublished, setIsPublished] = useState(false);
-  const [previousWinner, setPreviousWinner] = useState({
+  const [previousWinner] = useState({
     saintId: '',
     votesFor: 0,
     votesAgainst: 0,
@@ -181,7 +180,7 @@ export default function CreatePostPage() {
                   </label>
                   <select
                     value={bracketRound}
-                    onChange={(e) => setBracketRound(e.target.value as any)}
+                    onChange={(e) => setBracketRound(e.target.value as 'round1' | 'round2' | 'semifinals' | 'finals')}
                     className="w-full p-3 border border-gray-300 rounded-md"
                   >
                     <option value="round1">Round 1</option>

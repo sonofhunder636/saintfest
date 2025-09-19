@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { AdminAuthProvider, useAdminAuth } from '@/contexts/AdminAuthContext';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import Navigation from '@/components/Navigation';
 
 function AdminLoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
-  const { signInWithGoogle, isAuthenticated, isAuthorizedAdmin, clearSession } = useAdminAuth();
+  const { signInWithGoogle, isAuthenticated, isAuthorizedAdmin } = useAdminAuth();
   const router = useRouter();
 
   // Only clear session if there's an error or explicit logout, not on every mount
@@ -24,9 +24,9 @@ function AdminLoginContent() {
       // Use Google OAuth for actual authentication
       await signInWithGoogle();
       // Redirect will be handled by the useEffect above
-    } catch (error: any) {
+    } catch (error) {
       console.error('Admin login error:', error);
-      setError(error.message || 'Authentication failed. Please try again.');
+      setError(error instanceof Error ? error.message : 'Authentication failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
