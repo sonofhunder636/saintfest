@@ -2,10 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Saint } from '@/types';
-import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
+import { validateAdminAccess } from '@/lib/auth-middleware';
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate admin authentication first
+    const authResult = await validateAdminAccess(request);
+    if (!authResult.isValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: authResult.error || 'Admin authentication required',
+          requiresAuth: true
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log(`Admin ${authResult.userEmail} importing saints from Excel`);
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     
@@ -20,9 +36,21 @@ export async function POST(request: NextRequest) {
 
     // Read and parse Excel file
     const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: 'array' });
-    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+    const worksheet = workbook.getWorksheet(1);
+
+    // Convert worksheet to JSON array format
+    const jsonData: any[][] = [];
+    if (worksheet) {
+      worksheet.eachRow((row) => {
+        const rowData: any[] = [];
+        row.eachCell((cell, colNumber) => {
+          rowData[colNumber - 1] = cell.value;
+        });
+        jsonData.push(rowData);
+      });
+    }
 
     if (jsonData.length < 3) {
       return NextResponse.json(

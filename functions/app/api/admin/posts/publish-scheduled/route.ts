@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { validateAdminAccess } from '@/lib/auth-middleware';
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate admin authentication first
+    const authResult = await validateAdminAccess(request);
+    if (!authResult.isValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: authResult.error || 'Admin authentication required',
+          requiresAuth: true
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log(`Admin ${authResult.userEmail} publishing scheduled posts`);
+
     // Find all posts that are scheduled and should be published now
     const now = new Date();
     

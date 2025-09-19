@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { BlogPost } from '../route';
+import { validateAdminAccess } from '@/lib/auth-middleware';
 
 // Prevent this route from being executed during build
 export const runtime = 'nodejs';
@@ -14,6 +15,21 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Validate admin authentication first
+    const authResult = await validateAdminAccess(request);
+    if (!authResult.isValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: authResult.error || 'Admin authentication required',
+          requiresAuth: true
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log(`Admin ${authResult.userEmail} fetching post`);
+
     // Check Firebase connection
     if (!db) {
       return NextResponse.json({
@@ -63,6 +79,21 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Validate admin authentication first
+    const authResult = await validateAdminAccess(request);
+    if (!authResult.isValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: authResult.error || 'Admin authentication required',
+          requiresAuth: true
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log(`Admin ${authResult.userEmail} updating post`);
+
     // Check Firebase connection
     if (!db) {
       return NextResponse.json({
@@ -215,6 +246,21 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Validate admin authentication first
+    const authResult = await validateAdminAccess(request);
+    if (!authResult.isValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: authResult.error || 'Admin authentication required',
+          requiresAuth: true
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log(`Admin ${authResult.userEmail} deleting post`);
+
     // Check Firebase connection
     if (!db) {
       return NextResponse.json({

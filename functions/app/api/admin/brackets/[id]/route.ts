@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Bracket } from '@/types';
+import { validateAdminAccess } from '@/lib/auth-middleware';
 
 // Prevent this route from being executed during build
 export const runtime = 'nodejs';
@@ -13,6 +14,21 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Validate admin authentication first
+    const authResult = await validateAdminAccess(request);
+    if (!authResult.isValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: authResult.error || 'Admin authentication required',
+          requiresAuth: true
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log(`Admin ${authResult.userEmail} fetching bracket`);
+
     // Build-time safety checks
     const isBuildTime = (
       !request ||

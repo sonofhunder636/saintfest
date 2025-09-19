@@ -2,10 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { BlogPost } from '../route';
+import { validateAdminAccess } from '@/lib/auth-middleware';
 
 // GET - Get blog statistics and metrics
 export async function GET(request: NextRequest) {
   try {
+    // Validate admin authentication first
+    const authResult = await validateAdminAccess(request);
+    if (!authResult.isValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: authResult.error || 'Admin authentication required',
+          requiresAuth: true
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log(`Admin ${authResult.userEmail} fetching blog statistics`);
+
     // Get all posts for statistics
     const postsRef = collection(db, 'posts');
     const postsSnapshot = await getDocs(postsRef);

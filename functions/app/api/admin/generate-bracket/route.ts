@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { collection, getDocs, query, where, doc, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Saint, Bracket, BracketRound, BracketMatch } from '@/types';
+import { validateAdminAccess } from '@/lib/auth-middleware';
 
 // Prevent this route from being executed during build
 export const runtime = 'nodejs';
@@ -10,6 +11,21 @@ export const revalidate = 0;
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate admin authentication first
+    const authResult = await validateAdminAccess(request);
+    if (!authResult.isValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: authResult.error || 'Admin authentication required',
+          requiresAuth: true
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log(`Admin ${authResult.userEmail} generating bracket`);
+
     // Comprehensive build-time safety checks
     const isBuildTime = (
       !request ||
@@ -64,7 +80,7 @@ export async function POST(request: NextRequest) {
     console.log(`Generating 32-saint tournament for ${year} with 4 categories:`, categories);
 
     // Fetch all saints with proper error handling
-    let allSaints: Saint[] = [];
+    const allSaints: Saint[] = [];
     try {
       const saintsCollection = collection(db, 'saints');
       const allSaintsSnapshot = await getDocs(saintsCollection);

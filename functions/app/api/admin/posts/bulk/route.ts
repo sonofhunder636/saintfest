@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { validateAdminAccess } from '@/lib/auth-middleware';
 
 // POST - Bulk operations (update status, delete multiple posts)
 export async function POST(request: NextRequest) {
   try {
+    // Validate admin authentication first
+    const authResult = await validateAdminAccess(request);
+    if (!authResult.isValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: authResult.error || 'Admin authentication required',
+          requiresAuth: true
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log(`Admin ${authResult.userEmail} performing bulk post operation`);
+
     // Check Firebase connection
     if (!db) {
       return NextResponse.json({
