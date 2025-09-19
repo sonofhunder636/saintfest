@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { validateAdminAccess } from '@/lib/auth-middleware';
 
 export async function DELETE(request: NextRequest) {
   try {
+    // CRITICAL: Validate admin authentication first
+    const authResult = await validateAdminAccess(request);
+    if (!authResult.isValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: authResult.error || 'Admin authentication required',
+          requiresAuth: true
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log(`CRITICAL: Admin ${authResult.userEmail} attempting to wipe saints database at ${new Date().toISOString()}`);
     console.log('Starting saints database wipe...');
     
     const saintsCollection = collection(db, 'saints');

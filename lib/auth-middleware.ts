@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth } from './firebase-admin';
 
-// Admin email whitelist - matches the one in AuthContext.tsx
-const ADMIN_EMAIL = 'andrewfisher1024@gmail.com';
+// Enhanced admin email whitelist for security
+const ADMIN_EMAILS = [
+  'andrewfisher1024@gmail.com',
+  'andyhund636@gmail.com'
+  // Add other admin emails here
+];
 
 export interface AuthResult {
   isValid: boolean;
@@ -40,15 +44,19 @@ export async function validateAdminAccess(request: NextRequest): Promise<AuthRes
 
       // Verify the email matches our admin whitelist
       const userEmail = decodedToken.email;
-      const isAdmin = userEmail === ADMIN_EMAIL;
+      const isAdmin = ADMIN_EMAILS.includes(userEmail || '');
 
       if (!isAdmin) {
+        console.warn(`Unauthorized admin access attempt: ${userEmail} at ${new Date().toISOString()}`);
         return {
           isValid: false,
           userEmail,
-          error: `Access denied. Only ${ADMIN_EMAIL} has admin privileges.`
+          error: `Access denied. User not in admin whitelist.`
         };
       }
+
+      // Enhanced logging for security audit trail
+      console.log(`Admin access granted: ${userEmail} at ${new Date().toISOString()}`);
 
       return {
         isValid: true,
