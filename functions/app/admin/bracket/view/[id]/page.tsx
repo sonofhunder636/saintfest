@@ -1,33 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Trophy, ArrowLeft, Download, Eye } from 'lucide-react';
 import { Bracket, Saint } from '@/types';
+import { useParams } from 'next/navigation';
 
-interface BracketViewPageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default async function BracketViewPage({ params }: BracketViewPageProps) {
-  const { id } = await params;
+export default function BracketViewPage() {
+  const params = useParams();
+  const id = params.id as string;
   const { currentUser, loading } = useRequireAuth('admin');
   const [bracket, setBracket] = useState<Bracket | null>(null);
   const [saints, setSaints] = useState<Record<string, Saint>>({});
   const [loadingBracket, setLoadingBracket] = useState(true);
   const [error, setError] = useState<string>('');
 
-  useEffect(() => {
-    if (id) {
-      loadBracket();
-      loadSaints();
-    }
-  }, [id]);
-
-  const loadBracket = async () => {
+  const loadBracket = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/brackets/${id}`);
       const result = await response.json();
@@ -42,9 +33,9 @@ export default async function BracketViewPage({ params }: BracketViewPageProps) 
     } finally {
       setLoadingBracket(false);
     }
-  };
+  }, [id]);
 
-  const loadSaints = async () => {
+  const loadSaints = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/saints');
       const result = await response.json();
@@ -59,7 +50,14 @@ export default async function BracketViewPage({ params }: BracketViewPageProps) 
     } catch (err) {
       console.error('Failed to load saints:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (id) {
+      loadBracket();
+      loadSaints();
+    }
+  }, [id, loadBracket, loadSaints]);
 
   const getSaintName = (saintId: string): string => {
     if (!saintId || saintId.trim() === '') {

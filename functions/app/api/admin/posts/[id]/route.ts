@@ -181,17 +181,16 @@ export async function PUT(
       post
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     const { id: postId } = await params;
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update post';
     console.error('Error updating post - Full error details:', {
       postId: postId,
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-      name: error.name
+      message: errorMessage,
+      error: error instanceof Error ? error : 'Unknown error'
     });
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to update post' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

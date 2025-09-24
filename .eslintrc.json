@@ -1,5 +1,11 @@
 {
-  "extends": [],
+  "extends": [
+    "next/core-web-vitals",
+    "@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
   "ignorePatterns": [
     ".next/**/*",
     "out/**/*",
@@ -7,5 +13,8 @@
     "temp_api_backup/**/*",
     "next-env.d.ts"
   ],
-  "rules": {}
+  "rules": {
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-explicit-any": "warn"
+  }
 }

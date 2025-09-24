@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { DailyPost, Saint, VotingSession } from "@/types";
 import VotingWidget from "@/components/voting/VotingWidget";
 import Navigation from "@/components/Navigation";
@@ -244,8 +244,9 @@ interface PostPageProps {
   }>;
 }
 
-export default async function PostPage({ params }: PostPageProps) {
-  const { slug } = await params;
+export default function PostPage({ params }: PostPageProps) {
+  const resolvedParams = use(params);
+  const { slug } = resolvedParams;
   const [post, setPost] = useState<BlogPost | null>(null);
   const [isDynamicPost, setIsDynamicPost] = useState(false);
   const [isLoading, setIsLoading] = useState(true);

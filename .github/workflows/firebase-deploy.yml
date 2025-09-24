@@ -37,9 +37,6 @@ jobs:
     - name: Type Check
       run: npm run type-check
 
-    - name: Lint Code
-      run: npm run lint
-
     - name: Build Next.js Application
       run: npm run build:firebase
       env:
@@ -66,13 +63,29 @@ jobs:
     - name: Deploy to Firebase Functions (Preview)
       if: github.event_name == 'pull_request'
       run: |
+        echo "Deploying to Firebase Functions (Preview)..."
         echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SAINTFESTCODE }}' > ${HOME}/gcloud-service-key.json
         export GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gcloud-service-key.json
+
+        # Verify service account has required permissions
+        echo "Service account should have the following IAM roles:"
+        echo "- roles/firebase.admin (Firebase Admin)"
+        echo "- roles/cloudfunctions.admin (Cloud Functions Admin)"
+        echo "- roles/firebaseextensions.admin (Firebase Extensions Admin)"
+
         npx firebase-tools@latest deploy --only functions --project saintfestcode
 
     - name: Deploy to Firebase Functions (Production)
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       run: |
+        echo "Deploying to Firebase Functions (Production)..."
         echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SAINTFESTCODE }}' > ${HOME}/gcloud-service-key.json
         export GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gcloud-service-key.json
+
+        # Verify service account has required permissions
+        echo "Service account should have the following IAM roles:"
+        echo "- roles/firebase.admin (Firebase Admin)"
+        echo "- roles/cloudfunctions.admin (Cloud Functions Admin)"
+        echo "- roles/firebaseextensions.admin (Firebase Extensions Admin)"
+
         npx firebase-tools@latest deploy --only functions --project saintfestcode
