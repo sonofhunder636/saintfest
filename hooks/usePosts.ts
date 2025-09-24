@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { uploadPostImage, ImageUploadResult } from '@/lib/storage';
-import { BlogPost } from '@/app/api/admin/posts/route';
+import { BlogPost } from '@/types';
 
 interface PostMetadata {
   title: string;
@@ -320,6 +320,8 @@ export function usePosts() {
         views: 0,
         likes: 0,
         comments: 0,
+        tags: originalPost.tags || [],
+        categories: originalPost.categories || [],
       };
 
       return createPost(duplicatedPost.content, duplicatedPost);

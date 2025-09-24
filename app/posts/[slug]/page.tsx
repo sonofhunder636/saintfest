@@ -1,10 +1,5 @@
-'use client';
-
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { useEffect, useState, use } from "react";
-import { DailyPost, Saint, VotingSession } from "@/types";
-import VotingWidget from "@/components/voting/VotingWidget";
 import Navigation from "@/components/Navigation";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -143,30 +138,30 @@ Let us take a pause to invoke our Saintfest Cloud of Witnesses not only for thei
 
 Saintfest 2024 Litany
 
-Lord, have mercy.  
+Lord, have mercy.
 Christ, have mercy.
 
-Christ, hear us.  
-Christ, graciously hear us.  
-God, the Father of Heaven, have mercy on us.  
-God the Son, Redeemer of the world, have mercy on us.  
-God the Holy Ghost, have mercy on us.  
+Christ, hear us.
+Christ, graciously hear us.
+God, the Father of Heaven, have mercy on us.
+God the Son, Redeemer of the world, have mercy on us.
+God the Holy Ghost, have mercy on us.
 Holy Trinity, One God, have mercy on us.
 
 Mary, Queen of all Angels and Saints, pray for us.
 
-St. Fidelis of Sigmaringen, pray for us.  
-St. Polycarp, pray for us.  
-Sts. Crispin and Crispinian, pray for us.  
-St. James, pray for us.  
-Holy Innocents, pray for us.  
-Sts. Perpetua and Felicity, pray for us.  
-St. Clement, pray for us.  
-St. John Fisher, pray for us.  
+St. Fidelis of Sigmaringen, pray for us.
+St. Polycarp, pray for us.
+Sts. Crispin and Crispinian, pray for us.
+St. James, pray for us.
+Holy Innocents, pray for us.
+Sts. Perpetua and Felicity, pray for us.
+St. Clement, pray for us.
+St. John Fisher, pray for us.
 All you holy Martyrs, pray for us.
 
-St. Anthony Zaccaria, pray for us.  
-St. Andrew, pray for us.  
+St. Anthony Zaccaria, pray for us.
+St. Andrew, pray for us.
 St. Nicholas of Myra, pray`,
     slug: "october-31"
   },
@@ -236,195 +231,27 @@ St. Nicholas of Myra, pray`,
   }
 ];
 
-// Note: Using client-side rendering to support both static and dynamic posts
-
 interface PostPageProps {
   params: Promise<{
     slug: string;
   }>;
 }
 
-export default function PostPage({ params }: PostPageProps) {
-  const resolvedParams = use(params);
-  const { slug } = resolvedParams;
-  const [post, setPost] = useState<BlogPost | null>(null);
-  const [isDynamicPost, setIsDynamicPost] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [notFoundError, setNotFoundError] = useState(false);
-  const [dynamicPostData, setDynamicPostData] = useState<DailyPost | null>(null);
-  const [votingSession, setVotingSession] = useState<VotingSession | null>(null);
-  const [saint1, setSaint1] = useState<Saint | null>(null);
-  const [saint2, setSaint2] = useState<Saint | null>(null);
-  const [votingLoading, setVotingLoading] = useState(false);
+export default async function PostPage({ params }: PostPageProps) {
+  const { slug } = await params;
 
-  useEffect(() => {
-    const loadPost = async () => {
-      // First, try to find the post in historical posts
-      let foundPost = blogPosts.find(p => p.slug === slug);
-      
-      if (foundPost) {
-        setPost(foundPost);
-        setIsDynamicPost(false);
-        setIsLoading(false);
-        return;
-      }
+  const post = blogPosts.find(p => p.slug === slug);
 
-      // If not found in historical posts, try to fetch from blog posts API first
-      try {
-        const blogResponse = await fetch('/api/admin/posts');
-        if (blogResponse.ok) {
-          const blogResult = await blogResponse.json();
-          if (blogResult.success) {
-            const blogPost = blogResult.posts.find((p: any) => p.slug === slug);
-            if (blogPost) {
-              // Convert admin blog post to BlogPost format
-              foundPost = {
-                id: blogPost.id,
-                title: blogPost.title,
-                date: blogPost.publishedAt 
-                  ? new Date(blogPost.publishedAt).toISOString().split('T')[0] 
-                  : new Date(blogPost.createdAt).toISOString().split('T')[0],
-                excerpt: blogPost.excerpt || blogPost.content.substring(0, 200) + (blogPost.content.length > 200 ? '...' : ''),
-                content: blogPost.content,
-                slug: blogPost.slug
-              };
-              setPost(foundPost);
-              setIsDynamicPost(false); // Blog posts don't have voting
-              setIsLoading(false);
-              return;
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching blog post:', error);
-      }
-
-      // If not found in blog posts, try daily posts (tournament posts)
-      try {
-        const response = await fetch(`/api/posts/${slug}`);
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            const dynamicPost: DailyPost = result.data;
-            // Convert DailyPost to BlogPost format
-            foundPost = {
-              id: dynamicPost.id,
-              title: dynamicPost.title,
-              date: new Date(dynamicPost.publishDate).toISOString().split('T')[0],
-              excerpt: dynamicPost.content.substring(0, 200) + (dynamicPost.content.length > 200 ? '...' : ''),
-              content: dynamicPost.content,
-              slug: dynamicPost.id
-            };
-            setPost(foundPost);
-            setDynamicPostData(dynamicPost);
-            setIsDynamicPost(true);
-            
-            // Load voting data for dynamic posts
-            await loadVotingData(dynamicPost);
-            setIsLoading(false);
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching dynamic post:', error);
-      }
-
-      // Post not found anywhere
-      setNotFoundError(true);
-      setIsLoading(false);
-    };
-
-    loadPost();
-  }, [slug]);
-
-  // Function to load voting data for dynamic posts
-  const loadVotingData = async (postData: DailyPost) => {
-    if (!postData.matchup || !postData.matchup.saint1Id || !postData.matchup.saint2Id) {
-      return; // No voting for posts without matchups
-    }
-
-    setVotingLoading(true);
-    
-    try {
-      // Load all saints and find the ones we need
-      const saintsResponse = await fetch('/api/saints');
-      
-      if (saintsResponse.ok) {
-        const saintsResult = await saintsResponse.json();
-        
-        if (saintsResult.success) {
-          const allSaints = saintsResult.data;
-          const s1 = allSaints.find((s: Saint) => s.id === postData.matchup.saint1Id);
-          const s2 = allSaints.find((s: Saint) => s.id === postData.matchup.saint2Id);
-          
-          if (s1 && s2) {
-            setSaint1(s1);
-            setSaint2(s2);
-          }
-        }
-      }
-
-      // Load or create voting session
-      let sessionResponse = await fetch(`/api/voting-sessions?postId=${postData.id}`);
-      
-      if (!sessionResponse.ok) {
-        // Create voting session if it doesn't exist
-        const createResponse = await fetch('/api/voting-sessions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ postId: postData.id }),
-        });
-        
-        if (createResponse.ok) {
-          sessionResponse = createResponse;
-        }
-      }
-      
-      if (sessionResponse.ok) {
-        const sessionResult = await sessionResponse.json();
-        if (sessionResult.success) {
-          setVotingSession(sessionResult.data);
-        }
-      }
-
-    } catch (error) {
-      console.error('Error loading voting data:', error);
-    } finally {
-      setVotingLoading(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div style={{minHeight: '100vh', backgroundColor: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <div style={{textAlign: 'center'}}>
-          <div style={{
-            animation: 'spin 1s linear infinite',
-            borderRadius: '50%',
-            width: '3rem',
-            height: '3rem',
-            border: '2px solid #f3f4f6',
-            borderTop: '2px solid #8FBC8F',
-            margin: '0 auto 1rem'
-          }}></div>
-          <p style={{fontFamily: 'var(--font-cormorant)', color: '#6b7280'}}>Loading post...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (notFoundError || !post) {
+  if (!post) {
     notFound();
   }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
@@ -470,7 +297,7 @@ export default function PostPage({ params }: PostPageProps) {
           }}>
             Saintfest
           </Link>
-          
+
           {/* Navigation */}
           <Navigation />
         </div>
@@ -507,7 +334,7 @@ export default function PostPage({ params }: PostPageProps) {
             }}>
               {post.title}
             </h1>
-            
+
             <div style={{
               fontSize: '0.875rem',
               fontFamily: 'var(--font-league-spartan)',
@@ -518,7 +345,7 @@ export default function PostPage({ params }: PostPageProps) {
             }}>
               {formatDate(post.date)}
             </div>
-            
+
             <div style={{
               width: '6rem',
               height: '1px',
@@ -546,8 +373,8 @@ export default function PostPage({ params }: PostPageProps) {
             ) : (
               /* Legacy plain text content with basic formatting */
               post.content.split('\n').map((paragraph, index) => (
-                <p 
-                  key={index} 
+                <p
+                  key={index}
                   style={{marginBottom: '1.5rem'}}
                   dangerouslySetInnerHTML={{
                     __html: formatTextContent(paragraph)
@@ -556,60 +383,6 @@ export default function PostPage({ params }: PostPageProps) {
               ))
             )}
           </div>
-
-          {/* Voting Widget for Dynamic Posts */}
-          {isDynamicPost && dynamicPostData?.matchup && (
-            <div style={{marginBottom: '3rem'}}>
-              {votingLoading ? (
-                <div style={{
-                  padding: '2rem',
-                  backgroundColor: '#f9fafb',
-                  borderRadius: '0.5rem',
-                  border: '1px solid #e5e7eb',
-                  textAlign: 'center'
-                }}>
-                  <div style={{
-                    animation: 'spin 1s linear infinite',
-                    borderRadius: '50%',
-                    width: '2rem',
-                    height: '2rem',
-                    border: '2px solid #f3f4f6',
-                    borderTop: '2px solid #8FBC8F',
-                    margin: '0 auto 1rem'
-                  }}></div>
-                  <p style={{
-                    fontFamily: 'var(--font-cormorant)',
-                    color: '#6b7280'
-                  }}>
-                    Loading voting...
-                  </p>
-                </div>
-              ) : saint1 && saint2 && votingSession ? (
-                <VotingWidget
-                  sessionId={votingSession.id}
-                  saint1={saint1}
-                  saint2={saint2}
-                  closesAt={new Date(votingSession.closesAt)}
-                  isActive={votingSession.isActive}
-                />
-              ) : (
-                <div style={{
-                  padding: '2rem',
-                  backgroundColor: '#f9fafb',
-                  borderRadius: '0.5rem',
-                  border: '1px solid #e5e7eb',
-                  textAlign: 'center'
-                }}>
-                  <p style={{
-                    fontFamily: 'var(--font-cormorant)',
-                    color: '#6b7280'
-                  }}>
-                    Voting not available for this post.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Navigation */}
           <footer style={{

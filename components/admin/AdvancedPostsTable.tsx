@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { usePosts } from '@/hooks/usePosts';
-import { BlogPost } from '@/app/api/admin/posts/route';
+import { BlogPost } from '@/types';
 import {
   Box,
   Table,
@@ -109,9 +109,9 @@ export default function AdvancedPostsTable({ onEditPost, onCreateNew }: Advanced
       filtered = filtered.filter(post =>
         post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (post.tags || []).some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (post.categories || []).some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase()))
+        post.author?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (post.tags || []).some((tag: string) => tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (post.categories || []).some((cat: string) => cat.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -522,10 +522,10 @@ export default function AdvancedPostsTable({ onEditPost, onCreateNew }: Advanced
                       </Text>
                     </VStack>
                   </Td>
-                  <Td>{getStatusBadge(post.status)}</Td>
+                  <Td>{getStatusBadge(post.status || 'draft')}</Td>
                   <Td>{getPriorityBadge(post.priority || 'medium')}</Td>
                   <Td>
-                    <Text fontSize="sm">{post.author}</Text>
+                    <Text fontSize="sm">{post.author || 'Unknown'}</Text>
                   </Td>
                   <Td>
                     <Text fontSize="sm">{(post.views || 0).toLocaleString()}</Text>

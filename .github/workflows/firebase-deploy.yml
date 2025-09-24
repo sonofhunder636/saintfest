@@ -2,10 +2,10 @@ name: Deploy to Firebase Hosting
 
 on:
   push:
-    branches: 
+    branches:
       - main
   pull_request:
-    branches: 
+    branches:
       - main
 
 permissions:
@@ -16,17 +16,17 @@ permissions:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
-      
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
         cache: 'npm'
-        
+
     - name: Install Dependencies
       run: npm ci
 
@@ -38,7 +38,7 @@ jobs:
       run: npm run type-check
 
     - name: Build Next.js Application
-      run: npm run build:firebase
+      run: npm run build
       env:
         NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
         NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
@@ -47,45 +47,18 @@ jobs:
         NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
         NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
 
-    - name: Install Functions Dependencies
-      run: |
-        cd functions
-        npm install
-
-    - name: Verify Functions Structure
-      run: |
-        echo "Checking functions directory structure..."
-        ls -la functions/
-        echo "Checking for required files..."
-        test -f functions/package.json && echo "✓ package.json found" || echo "✗ package.json missing"
-        test -f functions/index.js && echo "✓ index.js found" || echo "✗ index.js missing"
-
-    - name: Deploy to Firebase Functions (Preview)
+    - name: Deploy to Firebase (Preview)
       if: github.event_name == 'pull_request'
       run: |
-        echo "Deploying to Firebase Functions (Preview)..."
+        echo "Deploying to Firebase Hosting (Preview)..."
         echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SAINTFESTCODE }}' > ${HOME}/gcloud-service-key.json
         export GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gcloud-service-key.json
+        npx firebase-tools@latest deploy --only hosting --project saintfestcode
 
-        # Verify service account has required permissions
-        echo "Service account should have the following IAM roles:"
-        echo "- roles/firebase.admin (Firebase Admin)"
-        echo "- roles/cloudfunctions.admin (Cloud Functions Admin)"
-        echo "- roles/firebaseextensions.admin (Firebase Extensions Admin)"
-
-        npx firebase-tools@latest deploy --only functions --project saintfestcode
-
-    - name: Deploy to Firebase Functions (Production)
+    - name: Deploy to Firebase (Production)
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       run: |
-        echo "Deploying to Firebase Functions (Production)..."
+        echo "Deploying to Firebase Hosting (Production)..."
         echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SAINTFESTCODE }}' > ${HOME}/gcloud-service-key.json
         export GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gcloud-service-key.json
-
-        # Verify service account has required permissions
-        echo "Service account should have the following IAM roles:"
-        echo "- roles/firebase.admin (Firebase Admin)"
-        echo "- roles/cloudfunctions.admin (Cloud Functions Admin)"
-        echo "- roles/firebaseextensions.admin (Firebase Extensions Admin)"
-
-        npx firebase-tools@latest deploy --only functions --project saintfestcode
+        npx firebase-tools@latest deploy --only hosting --project saintfestcode
