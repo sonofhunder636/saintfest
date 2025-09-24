@@ -53,7 +53,6 @@ jobs:
         echo "Deploying to Firebase Hosting (Preview)..."
         echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SAINTFESTCODE }}' > ${HOME}/gcloud-service-key.json
         export GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gcloud-service-key.json
-        npx firebase-tools@latest experiments:enable webframeworks
         npx firebase-tools@latest deploy --only hosting --project saintfestcode
 
     - name: Deploy to Firebase (Production)
@@ -62,5 +61,4 @@ jobs:
         echo "Deploying to Firebase Hosting (Production)..."
         echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SAINTFESTCODE }}' > ${HOME}/gcloud-service-key.json
         export GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gcloud-service-key.json
-        npx firebase-tools@latest experiments:enable webframeworks
         npx firebase-tools@latest deploy --only hosting --project saintfestcode

@@ -6,6 +6,7 @@
     "dev": "next dev",
     "prebuild": "npm run type-check",
     "build": "next build",
+    "build:static": "next build",
     "start": "next start",
     "lint": "eslint . --fix",
     "type-check": "tsc --noEmit"

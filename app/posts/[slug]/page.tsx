@@ -231,6 +231,13 @@ St. Nicholas of Myra, pray`,
   }
 ];
 
+// Generate static params for all blog posts
+export async function generateStaticParams() {
+  return blogPosts.map((post) => ({
+    slug: post.slug,
+  }));
+}
+
 interface PostPageProps {
   params: Promise<{
     slug: string;
