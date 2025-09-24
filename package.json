@@ -4,11 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:static": "npm run build && cd out && python3 -m http.server 8000",
     "prebuild": "npm run type-check",
     "build": "next build",
-    "build:firebase": "npm run build && npm run copy-to-functions",
-    "copy-to-functions": "cp -r .next functions/ && cp next.config.js functions/ && cp -r app functions/ && cp -r components functions/ && cp -r lib functions/ && cp -r types functions/ && cp -r contexts functions/ && cp -r hooks functions/ && cp -r data functions/ && cp -r public functions/ && cp package.json functions/package-root.json || true",
     "start": "next start",
     "lint": "eslint . --fix",
     "type-check": "tsc --noEmit"

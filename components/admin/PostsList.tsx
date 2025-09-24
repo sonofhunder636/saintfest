@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { BlogPost } from '@/app/api/admin/posts/route';
+import { BlogPost } from '@/types';
 
 interface PostsListProps {
   onCreateNew?: () => void;
@@ -46,7 +46,7 @@ export default function PostsList({ onCreateNew, onEditPost }: PostsListProps) {
       filtered = filtered.filter(post =>
         post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+        (post.tags || []).some((tag: string) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -187,7 +187,7 @@ export default function PostsList({ onCreateNew, onEditPost }: PostsListProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="text-lg font-semibold truncate">{post.title}</h3>
-                      {getStatusBadge(post.status)}
+                      {getStatusBadge(post.status || 'draft')}
                     </div>
                     
                     <p className="text-gray-600 text-sm mb-3 line-clamp-2">
@@ -200,10 +200,10 @@ export default function PostsList({ onCreateNew, onEditPost }: PostsListProps) {
                         <span>Created: {formatDate(post.createdAt)}</span>
                       </div>
                       
-                      {post.publishedAt && (
+                      {post.publishDate && post.isPublished && (
                         <div className="flex items-center gap-1">
                           <Eye className="h-4 w-4" />
-                          <span>Published: {formatDate(post.publishedAt)}</span>
+                          <span>Published: {formatDate(post.publishDate)}</span>
                         </div>
                       )}
                       
@@ -219,7 +219,7 @@ export default function PostsList({ onCreateNew, onEditPost }: PostsListProps) {
                       )}
                     </div>
                     
-                    {post.tags.length > 0 && (
+                    {post.tags && post.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {post.tags.map((tag) => (
                           <Badge key={tag} variant="secondary" className="text-xs">
