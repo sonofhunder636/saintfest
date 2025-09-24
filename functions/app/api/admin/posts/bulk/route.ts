@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         
         for (const postId of postIds) {
           const docRef = doc(db, 'posts', postId);
-          const updateData: any = {
+          const updateData: Record<string, unknown> = {
             status: data.status,
             updatedAt: new Date()
           };
