@@ -1,8 +1,9 @@
 import BracketViewClient from './BracketViewClient';
 
-// Generate static params for static export (admin pages return empty array)
+// Generate static params for static export
 export async function generateStaticParams(): Promise<{ id: string }[]> {
-  return [];
+  // Return a placeholder ID for static generation
+  return [{ id: 'placeholder' }];
 }
 
 export default function BracketViewPage() {
