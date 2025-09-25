@@ -13,7 +13,7 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { assertAuth, assertFirestore } from '@/lib/firebase';
+import { getFirebaseAuth, getFirebaseFirestore, isFirebaseAvailable } from '@/lib/firebase';
 import { User } from '@/types';
 
 interface AuthContextType {
@@ -51,7 +51,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Create or update user document in Firestore
   const createUserDocument = async (firebaseUser: FirebaseUser): Promise<User> => {
-    const db = assertFirestore();
+    const db = getFirebaseFirestore();
+    if (!db) {
+      throw new Error('Firestore not available');
+    }
     const userRef = doc(db, 'users', firebaseUser.uid);
     const userSnap = await getDoc(userRef);
 
@@ -109,26 +112,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signUp = async (email: string, password: string, displayName: string) => {
-    const auth = assertAuth();
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      throw new Error('Firebase Auth not available');
+    }
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName });
-    
+
     // Create user document will be handled by onAuthStateChanged
   };
 
   const signIn = async (email: string, password: string) => {
-    const auth = assertAuth();
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      throw new Error('Firebase Auth not available');
+    }
     await signInWithEmailAndPassword(auth, email, password);
   };
 
   const signInWithGoogle = async () => {
-    const auth = assertAuth();
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      throw new Error('Firebase Auth not available');
+    }
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
   };
 
   const signOut = async () => {
-    const auth = assertAuth();
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      throw new Error('Firebase Auth not available');
+    }
     await firebaseSignOut(auth);
   };
 
@@ -138,10 +153,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
     }, 5000);
 
-    const auth = assertAuth();
+    // Check if Firebase is available
+    if (!isFirebaseAvailable()) {
+      console.log('Firebase not available, skipping auth initialization');
+      setLoading(false);
+      return;
+    }
+
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      console.log('Firebase Auth not available, skipping auth initialization');
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       clearTimeout(timeout);
-      
+
       try {
         if (firebaseUser) {
           setFirebaseUser(firebaseUser);
@@ -156,7 +184,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setCurrentUser(null);
         setFirebaseUser(null);
       }
-      
+
       setLoading(false);
     });
 

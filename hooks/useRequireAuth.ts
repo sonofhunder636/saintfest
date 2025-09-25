@@ -1,30 +1,13 @@
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 
 export const useRequireAuth = (requiredRole?: 'admin' | 'user') => {
-  const { currentUser, loading } = useAuth();
-  const router = useRouter();
-  const [hasChecked, setHasChecked] = useState(false);
+  const { isAuthenticated, loading } = useSimpleAuth();
 
-  useEffect(() => {
-    // Don't redirect immediately - give Firebase time to restore auth state
-    if (!loading && !hasChecked) {
-      if (!currentUser) {
-        router.push('/auth/signin');
-        setHasChecked(true);
-        return;
-      }
-
-      if (requiredRole === 'admin' && currentUser.role !== 'admin') {
-        router.push('/unauthorized');
-        setHasChecked(true);
-        return;
-      }
-      
-      setHasChecked(true);
-    }
-  }, [currentUser, loading, requiredRole, router, hasChecked]);
-
-  return { currentUser, loading: loading || !hasChecked };
+  // Since we're using simple auth and admin layout handles protection,
+  // we can return a simplified response
+  return {
+    currentUser: isAuthenticated ? { role: 'admin' } : null,
+    loading: loading,
+    isAdmin: isAuthenticated
+  };
 };

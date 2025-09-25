@@ -1,34 +1,20 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAdminAuth } from '@/contexts/AdminAuthContext';
-
+import { useRouter } from 'next/navigation';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 
 function AdminContent() {
-  const { adminUser, loading } = useAdminAuth();
+  const { isAuthenticated, signOut } = useSimpleAuth();
   const router = useRouter();
 
-  // Redirect to login if not authenticated
-  if (!loading && !adminUser) {
-    router.push('/admin/login');
-    return null;
-  }
+  // The AdminLayout already handles authentication protection,
+  // so we know the user is authenticated if we reach this point
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#fffbeb'}}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4" style={{borderBottomColor: '#8FBC8F'}}></div>
-          <p style={{fontFamily: 'var(--font-cormorant)', fontSize: '1.125rem', color: '#6b7280'}}>Loading admin panel...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!adminUser) {
-    return null; // Will redirect above
-  }
+  const handleLogout = () => {
+    signOut(); // Clear the authentication token
+    router.push('/auth/signin'); // Redirect to login page
+  };
 
   return (
     <div className="min-h-screen" style={{backgroundColor: '#fffbeb'}}>
@@ -99,6 +85,24 @@ function AdminContent() {
               }}>
                 Posts
               </Link>
+              <button
+                onClick={handleLogout}
+                style={{
+                  fontSize: '0.875rem',
+                  fontFamily: 'var(--font-league-spartan)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: 'white',
+                  background: 'none',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  fontWeight: '500',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.25rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Logout
+              </button>
             </nav>
           </div>
         </div>

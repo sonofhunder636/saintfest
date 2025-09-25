@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant, Sorts_Mill_Goudy, League_Spartan, Dancing_Script } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
-import AdminAutoLogoutHandler from "@/components/AdminAutoLogoutHandler";
 
 const cormorant = Cormorant({
   variable: "--font-cormorant",
@@ -54,12 +51,7 @@ export default function RootLayout({
       <body
         className={`${cormorant.variable} ${sortsMill.variable} ${leagueSpartan.variable} ${dancingScript.variable} antialiased`}
       >
-        <AuthProvider>
-          <AdminAuthProvider>
-            <AdminAutoLogoutHandler />
-            {children}
-          </AdminAuthProvider>
-        </AuthProvider>
+        {children}
       </body>
     </html>
   );

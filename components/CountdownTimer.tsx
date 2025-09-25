@@ -17,17 +17,28 @@ export default function CountdownTimer() {
     const calculateTimeLeft = () => {
       const now = new Date();
       const currentYear = now.getFullYear();
-      
+      const currentMonth = now.getMonth(); // 0-indexed: Jan=0, Feb=1, ..., Dec=11
+      const currentDate = now.getDate();
+
       // Determine the target year for October 1st
       // If we're past November 1st, target next year's October 1st
-      // If we're before October 1st this year, target this year's October 1st
-      const targetYear = (now.getMonth() > 10 || (now.getMonth() === 10 && now.getDate() > 1)) 
-        ? currentYear + 1 
-        : currentYear;
-      
-      const saintfestStart = new Date(targetYear, 9, 1); // October 1st (month is 0-indexed)
+      // Otherwise, target this year's October 1st
+      let targetYear = currentYear;
+      if (currentMonth === 10 && currentDate > 1) { // Past Nov 1st
+        targetYear = currentYear + 1;
+      } else if (currentMonth > 10) { // December
+        targetYear = currentYear + 1;
+      }
+
+      const saintfestStart = new Date(targetYear, 9, 1, 0, 0, 0); // October 1st at midnight
       const saintfestEnd = new Date(targetYear, 10, 1, 23, 59, 59); // November 1st end of day
-      
+
+      // Debug logging
+      console.log('Current date:', now.toISOString());
+      console.log('Target year:', targetYear);
+      console.log('Saintfest start:', saintfestStart.toISOString());
+      console.log('Time difference (ms):', saintfestStart.getTime() - now.getTime());
+
       // Check current game state
       if (now >= saintfestStart && now <= saintfestEnd) {
         setGameState('active');
@@ -38,14 +49,14 @@ export default function CountdownTimer() {
       } else {
         setGameState('countdown');
         const timeDifference = saintfestStart.getTime() - now.getTime();
-        
+
         if (timeDifference > 0) {
-          return {
-            days: Math.floor(timeDifference / (1000 * 60 * 60 * 24)),
-            hours: Math.floor((timeDifference / (1000 * 60 * 60)) % 24),
-            minutes: Math.floor((timeDifference / 1000 / 60) % 60),
-            seconds: Math.floor((timeDifference / 1000) % 60)
-          };
+          const days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
+
+          return { days, hours, minutes, seconds };
         }
         return { days: 0, hours: 0, minutes: 0, seconds: 0 };
       }
