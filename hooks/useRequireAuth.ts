@@ -21,7 +21,7 @@ export const useRequireAuth = (requiredRole?: 'admin' | 'user') => {
         setHasChecked(true);
         return;
       }
-      
+
       setHasChecked(true);
     }
   }, [currentUser, loading, requiredRole, router, hasChecked]);
