@@ -12,8 +12,6 @@ function AdminProtection({ children }: { children: React.ReactNode }) {
     if (!loading) {
       if (!currentUser) {
         router.push('/auth/signin');
-      } else if (currentUser.role !== 'admin') {
-        router.push('/unauthorized');
       }
     }
   }, [currentUser, loading, router]);
@@ -29,8 +27,8 @@ function AdminProtection({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!currentUser || currentUser.role !== 'admin') {
-    return null; // Will redirect to login or unauthorized
+  if (!currentUser) {
+    return null; // Will redirect to login
   }
 
   return <>{children}</>;

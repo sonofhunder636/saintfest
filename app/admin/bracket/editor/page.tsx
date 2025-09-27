@@ -15,7 +15,7 @@ import { useEffect, useRef } from 'react';
  */
 
 export default function BracketEditorPage() {
-  const { currentUser, loading: authLoading } = useRequireAuth('admin');
+  const { currentUser, loading: authLoading } = useRequireAuth();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

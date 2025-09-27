@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Saint } from '@/types';
 
 export default function SaintsManagerPage() {
-  const { currentUser, loading: authLoading } = useRequireAuth('admin');
+  const { currentUser, loading: authLoading } = useRequireAuth();
   const [saints, setSaints] = useState<Saint[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');

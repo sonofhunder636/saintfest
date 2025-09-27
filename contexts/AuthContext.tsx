@@ -43,8 +43,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Define admin email - only this email can access admin functions
-  const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || '';
 
   // Create or update user document in Firestore
   const createUserDocument = async (firebaseUser: FirebaseUser): Promise<User> => {
@@ -57,13 +55,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     if (!userSnap.exists()) {
       // Create new user document
-      // Only assign admin role to the specific Google account
-      const isAdmin = firebaseUser.email === ADMIN_EMAIL;
-      const role: 'admin' | 'user' = isAdmin ? 'admin' : 'user';
       const userData: any = {
         email: firebaseUser.email!,
         displayName: firebaseUser.displayName || 'Anonymous',
-        role,
+        role: 'user',
         createdAt: serverTimestamp(),
         lastLoginAt: serverTimestamp(),
       };
@@ -80,20 +75,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email: firebaseUser.email!,
         displayName: firebaseUser.displayName || 'Anonymous',
         photoURL: firebaseUser.photoURL || undefined,
-        role,
+        role: 'user',
         createdAt: new Date(),
         lastLoginAt: new Date(),
       };
     } else {
-      // Update last login time and verify admin status
+      // Update last login time
       const userData = userSnap.data();
-      const isAdmin = firebaseUser.email === ADMIN_EMAIL;
-      const role: 'admin' | 'user' = isAdmin ? 'admin' : 'user';
 
-      // Update user data with current admin status check
+      // Update user data with current login time
       await setDoc(userRef, {
         lastLoginAt: serverTimestamp(),
-        role, // Ensure role is current
       }, { merge: true });
 
       return {
@@ -101,7 +93,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email: userData.email,
         displayName: userData.displayName,
         photoURL: userData.photoURL || undefined,
-        role, // Use verified role
+        role: userData.role || 'user',
         createdAt: userData.createdAt?.toDate() || new Date(),
         lastLoginAt: userData.lastLoginAt?.toDate() || new Date(),
       };
@@ -203,7 +195,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signUp,
     signIn,
     signOut,
-    isAdmin: currentUser?.role === 'admin' && currentUser?.email === ADMIN_EMAIL,
+    isAdmin: !!currentUser,
   };
 
   return (

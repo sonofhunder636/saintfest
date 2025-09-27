@@ -8,16 +8,12 @@ import { useCallback } from 'react';
  * Automatically includes Firebase authentication token
  */
 export function useAdminAPI() {
-  const { firebaseUser, isAdmin } = useAuth();
+  const { firebaseUser } = useAuth();
 
   const makeAdminRequest = useCallback(async (
     url: string,
     options: RequestInit = {}
   ): Promise<Response> => {
-    if (!isAdmin) {
-      throw new Error('Admin access required');
-    }
-
     if (!firebaseUser) {
       throw new Error('User not authenticated');
     }
@@ -50,7 +46,7 @@ export function useAdminAPI() {
       console.error('Admin API request failed:', error);
       throw error;
     }
-  }, [firebaseUser, isAdmin]);
+  }, [firebaseUser]);
 
   const adminPost = useCallback(async (url: string, data: any) => {
     return makeAdminRequest(url, {
@@ -84,6 +80,6 @@ export function useAdminAPI() {
     adminPut,
     adminDelete,
     adminGet,
-    isAdminAuthenticated: isAdmin && !!firebaseUser,
+    isAdminAuthenticated: !!firebaseUser,
   };
 }

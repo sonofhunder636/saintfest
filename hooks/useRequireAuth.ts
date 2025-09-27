@@ -2,7 +2,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
-export const useRequireAuth = (requiredRole?: 'admin' | 'user') => {
+export const useRequireAuth = () => {
   const { currentUser, loading } = useAuth();
   const router = useRouter();
   const [hasChecked, setHasChecked] = useState(false);
@@ -16,15 +16,9 @@ export const useRequireAuth = (requiredRole?: 'admin' | 'user') => {
         return;
       }
 
-      if (requiredRole === 'admin' && currentUser.role !== 'admin') {
-        router.push('/unauthorized');
-        setHasChecked(true);
-        return;
-      }
-
       setHasChecked(true);
     }
-  }, [currentUser, loading, requiredRole, router, hasChecked]);
+  }, [currentUser, loading, router, hasChecked]);
 
   return { currentUser, loading: loading || !hasChecked };
 };

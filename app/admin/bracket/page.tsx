@@ -8,7 +8,7 @@ import { saintfestTheme } from '@/lib/chakra-theme';
 import TournamentGenerator from '@/components/admin/TournamentGenerator';
 
 export default function BracketAdminPage() {
-  const { currentUser, loading } = useRequireAuth('admin');
+  const { currentUser, loading } = useRequireAuth();
   const [currentTournament, setCurrentTournament] = useState<Tournament | undefined>(undefined);
 
   const handleTournamentGenerated = (tournament: Tournament) => {

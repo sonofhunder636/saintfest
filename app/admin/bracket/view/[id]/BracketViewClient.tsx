@@ -12,7 +12,7 @@ import { useParams } from 'next/navigation';
 export default function BracketViewPage() {
   const params = useParams();
   const id = params.id as string;
-  const { currentUser, loading } = useRequireAuth('admin');
+  const { currentUser, loading } = useRequireAuth();
   const [bracket, setBracket] = useState<Bracket | null>(null);
   const [saints, setSaints] = useState<Record<string, Saint>>({});
   const [loadingBracket, setLoadingBracket] = useState(true);

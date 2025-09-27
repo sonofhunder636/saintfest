@@ -14,7 +14,7 @@ interface SaintOption {
 
 export default function CreatePostPage() {
   const router = useRouter();
-  const { currentUser, loading } = useRequireAuth('admin');
+  const { currentUser, loading } = useRequireAuth();
   const [saints, setSaints] = useState<SaintOption[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   

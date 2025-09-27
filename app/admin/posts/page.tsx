@@ -53,7 +53,7 @@ type ViewType = 'dashboard' | 'list' | 'editor';
 
 function PostsManagementPageContent() {
   const router = useRouter();
-  const { currentUser, loading } = useRequireAuth('admin');
+  const { currentUser, loading } = useRequireAuth();
   const { savePost, uploadImage, getPost } = usePosts();
   const toast = useToast();
   
