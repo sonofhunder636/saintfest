@@ -1,73 +1,69 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if user is admin
+
+    // Define admin email whitelist
     function isAdmin() {
-      return request.auth != null && 
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return request.auth != null && request.auth.token.email == 'andrewfisher1024@gmail.com';
     }
-    
-    // Helper function to check if user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    // Users collection - users can read/write their own data, admins can read all
+
+    // User documents - only admin can read/write
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow read: if isAdmin();
+      allow read, write: if isAdmin();
     }
-    
-    // Saints collection - admins can read/write, public can read via API only
+
+    // Saints - public read, admin write
     match /saints/{saintId} {
-      allow read, write, create, delete: if isAdmin();
-      // Public reads are handled via API endpoints with proper data filtering
-      allow read: if false;
+      allow read: if true;  // Public read access for all visitors
+      allow write: if isAdmin();
     }
-    
-    // Brackets collection - admins can read/write, public can read
+
+    // Tournaments - public read, admin write
+    match /tournaments/{tournamentId} {
+      allow read: if true;  // Public read access for all visitors
+      allow write: if isAdmin();
+    }
+
+    // Brackets - public read, admin write
     match /brackets/{bracketId} {
-      allow read, write, create, delete: if isAdmin();
-      allow read: if true; // Public can view brackets
+      allow read: if true;  // Public read access for all visitors
+      allow write: if isAdmin();
     }
-    
-    // Polls collection - admins can create/manage, authenticated users can read/vote
-    match /polls/{pollId} {
-      allow read: if true; // Anyone can read polls
-      allow create, update, delete: if isAdmin();
-    }
-    
-    // Votes collection - authenticated users can create their own votes, admins can read all
-    match /votes/{voteId} {
-      allow create: if isAuthenticated() && request.auth.uid == resource.data.userId;
-      allow read, update: if isAuthenticated() && request.auth.uid == resource.data.userId;
-      allow read, write, delete: if isAdmin();
-    }
-    
-    // Comments collection - authenticated users can create/manage their own, admins can moderate
-    match /comments/{commentId} {
-      allow read: if true; // Anyone can read comments
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
-      allow update, delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
-      allow write, delete: if isAdmin(); // Admins can moderate
-    }
-    
-    // Categories collection - read-only for public, admins can manage
+
+    // Categories - public read, admin write
     match /categories/{categoryId} {
-      allow read: if true;
-      allow write, create, delete: if isAdmin();
+      allow read: if true;  // Public read access for all visitors
+      allow write: if isAdmin();
     }
-    
-    // Game years collection - read-only for public, admins can manage
-    match /gameYears/{yearId} {
-      allow read: if true;
-      allow write, create, delete: if isAdmin();
+
+    // Posts - public read, admin write
+    match /posts/{postId} {
+      allow read: if true;  // Public read access for all visitors
+      allow write: if isAdmin();
     }
-    
-    // Default deny all other documents
-    match /{document=**} {
-      allow read, write: if false;
+
+    // Polls - public read, admin write
+    match /polls/{pollId} {
+      allow read: if true;  // Public read access for all visitors
+      allow write: if isAdmin();
+    }
+
+    // Votes - public read (for results), admin write
+    match /votes/{voteId} {
+      allow read: if true;  // Public read access for voting results
+      allow write: if isAdmin();
+    }
+
+    // Published brackets - public read, admin write
+    match /publishedBrackets/{bracketId} {
+      allow read: if true;  // Public read access for all visitors
+      allow write: if isAdmin();
+    }
+
+    // Tournament archives - public read, admin write
+    match /tournamentArchives/{archiveId} {
+      allow read: if true;  // Public read access for all visitors
+      allow write: if isAdmin();
     }
   }
 }

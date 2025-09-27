@@ -6,6 +6,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Tournament } from '@/types';
 import { saintfestTheme } from '@/lib/chakra-theme';
 import TournamentGenerator from '@/components/admin/TournamentGenerator';
+import { publishTournament } from '@/lib/tournamentService';
 
 export default function BracketAdminPage() {
   const { currentUser, loading } = useRequireAuth();
@@ -20,18 +21,10 @@ export default function BracketAdminPage() {
     try {
       console.log('Publishing tournament:', tournament);
 
-      const response = await fetch('/api/bracket/publish', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tournament: tournament,
-          publishedBy: currentUser?.id || 'admin'
-        })
-      });
-
-      const result = await response.json();
+      const result = await publishTournament(
+        tournament,
+        currentUser?.id || 'admin'
+      );
 
       if (result.success) {
         console.log('Tournament published successfully:', result);
