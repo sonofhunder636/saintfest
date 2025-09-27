@@ -17,6 +17,7 @@ import { PublishedBracket } from '@/types';
 import { saintfestTheme } from '@/lib/chakra-theme';
 import Navigation from '@/components/Navigation';
 import PublishedBracketDisplay from '@/components/bracket/PublishedBracketDisplay';
+import { getActivePublishedBracket } from '@/lib/tournamentService';
 
 export default function PublicBracketPage() {
   const [publishedBracket, setPublishedBracket] = useState<PublishedBracket | null>(null);
@@ -29,13 +30,19 @@ export default function PublicBracketPage() {
 
   const loadPublishedBracket = async () => {
     try {
-      const response = await fetch('/api/bracket/current');
-      const result = await response.json();
+      console.log('Fetching published bracket for year 2025...');
+      const bracket = await getActivePublishedBracket(2025);
 
-      if (result.success) {
-        setPublishedBracket(result.bracket);
+      console.log('Retrieved bracket:', bracket);
+      console.log('Bracket matches:', bracket?.matches);
+      console.log('Matches length:', bracket?.matches?.length);
+      console.log('Bracket categories:', bracket?.categories);
+
+      if (bracket) {
+        setPublishedBracket(bracket);
       } else {
-        setError(result.error || 'Failed to load bracket');
+        console.log('No bracket returned from getActivePublishedBracket');
+        setError('No published bracket found for 2025');
       }
     } catch (err) {
       console.error('Failed to load published bracket:', err);
@@ -47,23 +54,8 @@ export default function PublicBracketPage() {
 
   const downloadBracket = async () => {
     if (!publishedBracket) return;
-    try {
-      const response = await fetch(`/api/bracket/published-pdf`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `saintfest-${publishedBracket.year}-bracket.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
-    } catch (error) {
-      console.error('Failed to download bracket:', error);
-      alert('Failed to download bracket. Please try again.');
-    }
+    // TODO: Implement client-side PDF generation or alternative download method
+    alert('PDF download feature will be implemented in a future update.');
   };
 
   const shareBracket = async () => {

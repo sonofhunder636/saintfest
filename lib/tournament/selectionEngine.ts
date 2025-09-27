@@ -348,17 +348,45 @@ export class TournamentSelectionEngine {
   }
 
   /**
-   * Generate the tournament round structure
+   * Generate the tournament round structure with empty match placeholders
    */
   private generateRounds(categories: TournamentCategory[]): any[] {
-    // This will be implemented by the layout engine
-    // For now, return empty structure to be filled later
+    // Create empty match structures that preserve bracket layout
+    const createEmptyMatches = (count: number, roundNumber: number) => {
+      const matches = [];
+      for (let i = 0; i < count; i++) {
+        matches.push({
+          id: `r${roundNumber}-m${i + 1}`,
+          roundNumber,
+          matchNumber: i + 1,
+          saint1: undefined,
+          saint2: undefined,
+          saint1Name: undefined,
+          saint2Name: undefined,
+          winner: undefined,
+          winnerName: undefined,
+          votesForSaint1: 0,
+          votesForSaint2: 0,
+          position: {
+            x: 0,
+            y: 0,
+            width: 200,
+            height: 60
+          },
+          categoryAffiliation: undefined,
+          isLeftSide: false,
+          isChampionship: roundNumber === 5
+        });
+      }
+      return matches;
+    };
+
     return [
-      { roundNumber: 1, roundName: 'Round of 32', matches: [] },
-      { roundNumber: 2, roundName: 'Round of 16', matches: [] },
-      { roundNumber: 3, roundName: 'Elite Eight', matches: [] },
-      { roundNumber: 4, roundName: 'Final Four', matches: [] },
-      { roundNumber: 5, roundName: 'Championship', matches: [] }
+      { roundNumber: 1, roundName: 'Round of 32', matches: createEmptyMatches(16, 1) },
+      { roundNumber: 2, roundName: 'Round of 16', matches: createEmptyMatches(8, 2) },
+      { roundNumber: 3, roundName: 'Elite Eight', matches: createEmptyMatches(4, 3) },
+      { roundNumber: 4, roundName: 'Final Four', matches: createEmptyMatches(2, 4) },
+      { roundNumber: 5, roundName: 'Championship', matches: createEmptyMatches(1, 5) }
     ];
   }
 

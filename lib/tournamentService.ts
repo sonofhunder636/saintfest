@@ -38,7 +38,8 @@ function sanitizeForFirestore(obj: any): any {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeForFirestore(item)).filter(item => item !== null);
+    // Preserve all array items, just sanitize them
+    return obj.map(item => sanitizeForFirestore(item));
   }
 
   if (obj instanceof Date) {
@@ -48,9 +49,8 @@ function sanitizeForFirestore(obj: any): any {
   if (typeof obj === 'object') {
     const sanitized: any = {};
     for (const [key, value] of Object.entries(obj)) {
-      if (value !== undefined) {
-        sanitized[key] = sanitizeForFirestore(value);
-      }
+      // Convert undefined to null for Firestore, preserve all fields
+      sanitized[key] = value === undefined ? null : sanitizeForFirestore(value);
     }
     return sanitized;
   }
@@ -65,9 +65,17 @@ function transformTournamentToPublishedBracket(
   tournament: Tournament,
   publishedBy: string
 ): Omit<PublishedBracket, 'id' | 'archiveId'> {
+  console.log('transformTournamentToPublishedBracket: Input tournament:', tournament);
+  console.log('transformTournamentToPublishedBracket: Tournament rounds:', tournament.rounds);
+  console.log('transformTournamentToPublishedBracket: Rounds count:', tournament.rounds?.length);
+
   // Transform matches with flattened saint data
-  const publishedMatches: PublishedMatch[] = tournament.rounds.flatMap(round =>
-    round.matches.map(match => ({
+  const publishedMatches: PublishedMatch[] = tournament.rounds.flatMap(round => {
+    console.log('transformTournamentToPublishedBracket: Processing round:', round);
+    console.log('transformTournamentToPublishedBracket: Round matches:', round.matches);
+    console.log('transformTournamentToPublishedBracket: Round matches count:', round.matches?.length);
+
+    return round.matches.map(match => ({
       id: match.id,
       roundNumber: match.roundNumber,
       matchNumber: match.matchNumber,
@@ -89,7 +97,10 @@ function transformTournamentToPublishedBracket(
       isLeftSide: match.isLeftSide || false,
       isChampionship: match.isChampionship || false
     }))
-  );
+  });
+
+  console.log('transformTournamentToPublishedBracket: Final publishedMatches:', publishedMatches);
+  console.log('transformTournamentToPublishedBracket: PublishedMatches count:', publishedMatches.length);
 
   // Transform categories with pre-calculated positioning
   const publishedCategories: PublishedCategory[] = tournament.categories.map(category => ({
@@ -283,6 +294,7 @@ export async function publishTournament(
  */
 export async function getActivePublishedBracket(year: number): Promise<PublishedBracket | null> {
   try {
+    console.log('getActivePublishedBracket: Starting query for year', year);
     const db = assertFirestore();
     const publishedBracketsRef = collection(db, 'publishedBrackets');
 
@@ -292,9 +304,13 @@ export async function getActivePublishedBracket(year: number): Promise<Published
       where('isActive', '==', true)
     );
 
+    console.log('getActivePublishedBracket: Executing Firestore query...');
     const querySnapshot = await getDocs(q);
 
+    console.log('getActivePublishedBracket: Query result count:', querySnapshot.docs.length);
+
     if (querySnapshot.empty) {
+      console.log('getActivePublishedBracket: No documents found');
       return null;
     }
 
@@ -302,10 +318,38 @@ export async function getActivePublishedBracket(year: number): Promise<Published
     const doc = querySnapshot.docs[0];
     const data = doc.data();
 
+    console.log('getActivePublishedBracket: Raw Firestore data:', data);
+    console.log('getActivePublishedBracket: Document ID:', doc.id);
+    console.log('getActivePublishedBracket: Data keys:', Object.keys(data));
+    console.log('getActivePublishedBracket: Matches field:', data.matches);
+    console.log('getActivePublishedBracket: Categories field:', data.categories);
+
+    // Handle multiple possible states of publishedAt field
+    const publishedAt = (() => {
+      if (!data.publishedAt) {
+        console.warn('publishedAt field is missing, using current date');
+        return new Date();
+      }
+
+      if (typeof data.publishedAt.toDate === 'function') {
+        // It's a Firestore Timestamp
+        return data.publishedAt.toDate();
+      }
+
+      if (data.publishedAt instanceof Date) {
+        // It's already a JavaScript Date
+        return data.publishedAt;
+      }
+
+      // Try to parse as date string/number
+      const fallbackDate = new Date(data.publishedAt);
+      return isNaN(fallbackDate.getTime()) ? new Date() : fallbackDate;
+    })();
+
     return {
       ...data,
       id: doc.id,
-      publishedAt: data.publishedAt.toDate(),
+      publishedAt,
     } as PublishedBracket;
 
   } catch (error) {
