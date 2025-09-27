@@ -20,7 +20,7 @@
 ### **Security Measures**
 - ✅ **`.env.local` excluded** - Sensitive data protected
 - ✅ **Personal access token configured** for GitHub access
-- ✅ **Admin access restricted** to `andrewfisher1024@gmail.com`
+- ✅ **Admin access restricted** to authorized email account
 - ✅ **Complete backup created**: `../saintfestcode_BACKUP_20250904_205100`
 
 ---
@@ -53,8 +53,8 @@ git push origin main
 ### **Admin Access Flow**
 1. Click "Admin" button (appears on all pages)
 2. Go to admin login page with username/password fields
-3. Click "Sign In" → Google OAuth authentication
-4. Only `andrewfisher1024@gmail.com` can access admin features
+3. Enter admin credentials → Email/password authentication
+4. Only authorized admin account can access admin features
 5. Auto-logout when leaving admin area
 
 ---

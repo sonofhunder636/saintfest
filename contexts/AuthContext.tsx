@@ -2,13 +2,11 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  User as FirebaseUser, 
-  onAuthStateChanged, 
+import {
+  User as FirebaseUser,
+  onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
   signOut as firebaseSignOut,
   updateProfile
 } from 'firebase/auth';
@@ -22,7 +20,6 @@ interface AuthContextType {
   loading: boolean;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
 }
@@ -46,8 +43,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Define admin email - only this Google account can access admin functions
-  const ADMIN_EMAIL = 'andrewfisher1024@gmail.com';
+  // Define admin email - only this email can access admin functions
+  const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || '';
 
   // Create or update user document in Firestore
   const createUserDocument = async (firebaseUser: FirebaseUser): Promise<User> => {
@@ -125,19 +122,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signIn = async (email: string, password: string) => {
     const auth = getFirebaseAuth();
     if (!auth) {
+      console.error('Firebase Auth initialization failed');
       throw new Error('Firebase Auth not available');
     }
-    await signInWithEmailAndPassword(auth, email, password);
+
+    try {
+      console.log('Attempting Firebase sign-in with email:', email);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Firebase sign-in successful:', result.user.uid);
+    } catch (error: any) {
+      console.error('Firebase sign-in error:', {
+        code: error.code,
+        message: error.message,
+        details: error
+      });
+      throw error;
+    }
   };
 
-  const signInWithGoogle = async () => {
-    const auth = getFirebaseAuth();
-    if (!auth) {
-      throw new Error('Firebase Auth not available');
-    }
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
-  };
 
   const signOut = async () => {
     const auth = getFirebaseAuth();
@@ -200,7 +202,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     signUp,
     signIn,
-    signInWithGoogle,
     signOut,
     isAdmin: currentUser?.role === 'admin' && currentUser?.email === ADMIN_EMAIL,
   };
