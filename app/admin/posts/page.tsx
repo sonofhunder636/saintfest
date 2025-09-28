@@ -104,11 +104,15 @@ function PostsManagementPageContent() {
   const handleAutoSave = useCallback(async () => {
     // Double-check we have both required fields before attempting save
     if (!content.trim() || !metadata.title.trim()) return;
-    
+
     try {
       setIsSaving(true);
       const result = await savePost(content, metadata, editingPostId || undefined);
       if (result) {
+        // If this was a new post creation, set the editing ID for future saves
+        if (!editingPostId && result.id) {
+          setEditingPostId(result.id);
+        }
         setLastSaved(new Date());
         // Don't navigate during auto-save, only update last saved time
       }
@@ -250,15 +254,20 @@ function PostsManagementPageContent() {
       }
 
       console.log('Post saved successfully!');
-      
+
+      // If this was a new post creation, set the editing ID for future saves
+      if (!editingPostId && result.id) {
+        setEditingPostId(result.id);
+      }
+
       // Update last saved time
       setLastSaved(new Date());
-      
+
       // Set success state for in-place feedback
-      const actionMessage = metadata.status === 'published' ? 'published' : 
-                           metadata.status === 'scheduled' ? 'scheduled' : 
+      const actionMessage = metadata.status === 'published' ? 'published' :
+                           metadata.status === 'scheduled' ? 'scheduled' :
                            metadata.status === 'archived' ? 'archived' : 'saved as draft';
-      
+
       setSaveSuccess({
         show: true,
         message: `Post ${actionMessage} successfully!`,

@@ -3,6 +3,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import { uploadPostImage, ImageUploadResult } from '@/lib/storage';
 import { BlogPost } from '@/types';
+import { assertFirestore } from '@/lib/firebase';
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit as firestoreLimit,
+  serverTimestamp,
+  writeBatch,
+  Timestamp
+} from 'firebase/firestore';
 
 interface PostMetadata {
   title: string;
@@ -47,6 +64,64 @@ interface BulkOperationData {
   categories?: string[];
 }
 
+// Helper function to generate a unique slug
+async function generateUniqueSlug(baseSlug: string, excludeId?: string): Promise<string> {
+  try {
+    const db = assertFirestore();
+    const postsRef = collection(db, 'posts');
+
+    let uniqueSlug = baseSlug;
+    let counter = 1;
+
+    while (true) {
+      try {
+        const existingPostQuery = query(postsRef, where('slug', '==', uniqueSlug));
+        const existingPostSnapshot = await getDocs(existingPostQuery);
+
+        // Check if slug exists and is not the current post being updated
+        const conflictingPost = existingPostSnapshot.docs.find(doc =>
+          excludeId ? doc.id !== excludeId : true
+        );
+
+        if (!conflictingPost) {
+          return uniqueSlug;
+        }
+
+        // Generate next candidate slug
+        uniqueSlug = `${baseSlug}-${counter}`;
+        counter++;
+
+        // Prevent infinite loops
+        if (counter > 100) {
+          throw new Error('Unable to generate unique slug after 100 attempts');
+        }
+      } catch (firestoreError) {
+        console.error('Firestore error while checking slug uniqueness:', firestoreError);
+
+        // If it's a network or permission error, fall back to timestamp-based slug
+        if (counter === 1) {
+          const timestamp = Date.now();
+          return `${baseSlug}-${timestamp}`;
+        }
+        throw firestoreError;
+      }
+    }
+  } catch (error) {
+    console.error('Error in generateUniqueSlug:', error);
+    // Fallback to timestamp-based slug if all else fails
+    const timestamp = Date.now();
+    return `${baseSlug}-${timestamp}`;
+  }
+}
+
+// Helper function to sanitize and format slug
+function formatSlug(title: string, customSlug?: string): string {
+  if (customSlug && customSlug.trim()) {
+    return customSlug.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  }
+  return title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
 export function usePosts() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,20 +133,38 @@ export function usePosts() {
     try {
       setLoading(true);
       setError(null);
-      
-      const params = new URLSearchParams();
-      if (status) params.append('status', status);
-      params.append('limit', limit.toString());
-      
-      const response = await fetch(`/api/admin/posts?${params.toString()}`);
-      const result = await response.json();
-      
-      if (result.success) {
-        setPosts(result.posts);
-      } else {
-        setError(result.error || 'Failed to fetch posts');
+
+      const db = assertFirestore();
+      const postsRef = collection(db, 'posts');
+
+      let q = query(postsRef, orderBy('createdAt', 'desc'));
+
+      if (status) {
+        q = query(postsRef, where('status', '==', status), orderBy('createdAt', 'desc'));
       }
+
+      if (limit > 0) {
+        q = query(q, firestoreLimit(limit));
+      }
+
+      const querySnapshot = await getDocs(q);
+      const fetchedPosts = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          // Convert Firestore Timestamps to Dates
+          createdAt: data.createdAt?.toDate?.() || new Date(),
+          updatedAt: data.updatedAt?.toDate?.() || new Date(),
+          publishedAt: data.publishedAt?.toDate?.() || undefined,
+          scheduledAt: data.scheduledAt?.toDate?.() || undefined,
+          scheduledFor: data.scheduledFor?.toDate?.() || undefined,
+        } as BlogPost;
+      });
+
+      setPosts(fetchedPosts);
     } catch (err) {
+      console.error('Error fetching posts from Firestore:', err);
       setError('Failed to fetch posts');
     } finally {
       setLoading(false);
@@ -80,147 +173,170 @@ export function usePosts() {
 
   const createPost = useCallback(async (content: string, metadata: PostMetadata): Promise<BlogPost | null> => {
     try {
-      const requestData = {
+      const db = assertFirestore();
+      const postsRef = collection(db, 'posts');
+
+      // Generate and ensure unique slug
+      const baseSlug = formatSlug(metadata.title, metadata.slug);
+      const uniqueSlug = await generateUniqueSlug(baseSlug);
+
+      const postData = {
         title: metadata.title,
-        slug: metadata.slug,
+        slug: uniqueSlug,
         content,
         status: metadata.status,
-        tags: metadata.tags,
+        tags: metadata.tags || [],
         categories: metadata.categories || [],
-        excerpt: metadata.excerpt,
-        featuredImage: metadata.featuredImage,
-        scheduledFor: metadata.scheduledFor,
-        scheduledAt: metadata.scheduledAt,
+        excerpt: metadata.excerpt || null,
+        featuredImage: metadata.featuredImage || null,
+        scheduledFor: metadata.scheduledFor ? Timestamp.fromDate(metadata.scheduledFor) : null,
+        scheduledAt: metadata.scheduledAt ? Timestamp.fromDate(metadata.scheduledAt) : null,
         featured: metadata.featured || false,
         priority: metadata.priority || 'medium',
-        seoTitle: metadata.seoTitle,
-        seoDescription: metadata.seoDescription,
+        seoTitle: metadata.seoTitle || null,
+        seoDescription: metadata.seoDescription || null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        publishedAt: metadata.status === 'published' ? serverTimestamp() : null,
+        views: 0,
+        likes: 0,
+        comments: 0
       };
-      
-      console.log('Creating post with data:', requestData);
-      
-      const response = await fetch('/api/admin/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestData),
-      });
 
-      const result = await response.json();
-      
-      console.log('Create post API response:', { 
-        status: response.status, 
-        success: result.success, 
-        error: result.error,
-        post: result.post ? 'Post returned' : 'No post returned' 
-      });
-      
-      if (result.success && result.post) {
-        setPosts(prev => [result.post, ...prev]);
-        return result.post;
-      } else {
-        // Enhanced error message extraction with specific guidance
-        let errorMessage = 'Failed to save post';
-        
-        if (result.error) {
-          errorMessage = result.error;
-        } else if (response.status === 400) {
-          errorMessage = 'Validation failed - please check your title, content, and URL slug';
-        } else if (response.status === 409) {
-          errorMessage = 'A post with this URL slug already exists - please choose a different slug';
-        } else if (response.status >= 500) {
-          errorMessage = 'Server error - please try again in a moment';
-        } else if (!response.ok) {
-          errorMessage = `Request failed with status ${response.status}`;
-        }
-        
-        console.error('Create post error details:', {
-          status: response.status,
-          statusText: response.statusText,
-          serverError: result.error,
-          finalMessage: errorMessage
-        });
-        
-        throw new Error(errorMessage);
+      console.log('Creating post with data:', postData);
+
+      const docRef = await addDoc(postsRef, postData);
+
+      // Fetch the created post to return with proper timestamps
+      const createdPostDoc = await getDoc(docRef);
+      if (!createdPostDoc.exists()) {
+        throw new Error('Failed to retrieve created post');
       }
+
+      const createdPostData = createdPostDoc.data();
+      const newPost: BlogPost = {
+        ...createdPostData,
+        id: docRef.id,
+        createdAt: createdPostData.createdAt?.toDate?.() || new Date(),
+        updatedAt: createdPostData.updatedAt?.toDate?.() || new Date(),
+        publishedAt: createdPostData.publishedAt?.toDate?.() || undefined,
+        scheduledAt: createdPostData.scheduledAt?.toDate?.() || undefined,
+        scheduledFor: createdPostData.scheduledFor?.toDate?.() || undefined,
+      } as BlogPost;
+
+      setPosts(prev => [newPost, ...prev]);
+      return newPost;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create post');
-      return null;
+      console.error('Error creating post in Firestore:', err);
+
+      let errorMessage = 'Failed to create post';
+
+      if (err instanceof Error) {
+        // Handle specific Firestore errors
+        if (err.message.includes('permission-denied')) {
+          errorMessage = 'Permission denied. Please check your authentication status.';
+        } else if (err.message.includes('network-request-failed') || err.message.includes('Failed to fetch')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (err.message.includes('invalid-argument')) {
+          errorMessage = 'Invalid data format. Please check your post content.';
+        } else if (err.message.includes('quota-exceeded')) {
+          errorMessage = 'Database quota exceeded. Please try again later.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   }, []);
 
   const updatePost = useCallback(async (id: string, content: string, metadata: PostMetadata): Promise<BlogPost | null> => {
     try {
-      const response = await fetch(`/api/admin/posts/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: metadata.title,
-          slug: metadata.slug,
-          content,
-          status: metadata.status,
-          tags: metadata.tags,
-          categories: metadata.categories || [],
-          excerpt: metadata.excerpt,
-          featuredImage: metadata.featuredImage,
-          scheduledFor: metadata.scheduledFor,
-          scheduledAt: metadata.scheduledAt,
-          featured: metadata.featured || false,
-          priority: metadata.priority || 'medium',
-          seoTitle: metadata.seoTitle,
-          seoDescription: metadata.seoDescription,
-        }),
-      });
+      const db = assertFirestore();
+      const postRef = doc(db, 'posts', id);
 
-      const result = await response.json();
-      if (result.success) {
-        setPosts(prev => prev.map(post => post.id === id ? result.post : post));
-        return result.post;
-      } else {
-        // Enhanced error message extraction with specific guidance
-        let errorMessage = 'Failed to update post';
-        
-        if (result.error) {
-          errorMessage = result.error;
-        } else if (response.status === 400) {
-          errorMessage = 'Validation failed - please check your title, content, and URL slug';
-        } else if (response.status === 409) {
-          errorMessage = 'A post with this URL slug already exists - please choose a different slug';
-        } else if (response.status >= 500) {
-          errorMessage = 'Server error - please try again in a moment';
-        } else if (!response.ok) {
-          errorMessage = `Request failed with status ${response.status}`;
-        }
-        
-        console.error('Update post error details:', {
-          postId: id,
-          status: response.status,
-          statusText: response.statusText,
-          serverError: result.error,
-          finalMessage: errorMessage
-        });
-        
-        throw new Error(errorMessage);
+      // Generate and ensure unique slug (excluding current post)
+      const baseSlug = formatSlug(metadata.title, metadata.slug);
+      const uniqueSlug = await generateUniqueSlug(baseSlug, id);
+
+      const updateData = {
+        title: metadata.title,
+        slug: uniqueSlug,
+        content,
+        status: metadata.status,
+        tags: metadata.tags || [],
+        categories: metadata.categories || [],
+        excerpt: metadata.excerpt || null,
+        featuredImage: metadata.featuredImage || null,
+        scheduledFor: metadata.scheduledFor ? Timestamp.fromDate(metadata.scheduledFor) : null,
+        scheduledAt: metadata.scheduledAt ? Timestamp.fromDate(metadata.scheduledAt) : null,
+        featured: metadata.featured || false,
+        priority: metadata.priority || 'medium',
+        seoTitle: metadata.seoTitle || null,
+        seoDescription: metadata.seoDescription || null,
+        updatedAt: serverTimestamp(),
+        publishedAt: metadata.status === 'published' ? (metadata.publishedAt ? Timestamp.fromDate(metadata.publishedAt) : serverTimestamp()) : null,
+      };
+
+      await updateDoc(postRef, updateData);
+
+      // Fetch the updated post
+      const updatedPostDoc = await getDoc(postRef);
+      if (!updatedPostDoc.exists()) {
+        throw new Error('Failed to retrieve updated post');
       }
+
+      const updatedPostData = updatedPostDoc.data();
+      const updatedPost: BlogPost = {
+        ...updatedPostData,
+        id: updatedPostDoc.id,
+        createdAt: updatedPostData.createdAt?.toDate?.() || new Date(),
+        updatedAt: updatedPostData.updatedAt?.toDate?.() || new Date(),
+        publishedAt: updatedPostData.publishedAt?.toDate?.() || undefined,
+        scheduledAt: updatedPostData.scheduledAt?.toDate?.() || undefined,
+        scheduledFor: updatedPostData.scheduledFor?.toDate?.() || undefined,
+      } as BlogPost;
+
+      setPosts(prev => prev.map(post => post.id === id ? updatedPost : post));
+      return updatedPost;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update post');
-      return null;
+      console.error('Error updating post in Firestore:', err);
+
+      let errorMessage = 'Failed to update post';
+
+      if (err instanceof Error) {
+        // Handle specific Firestore errors
+        if (err.message.includes('permission-denied')) {
+          errorMessage = 'Permission denied. Please check your authentication status.';
+        } else if (err.message.includes('network-request-failed') || err.message.includes('Failed to fetch')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (err.message.includes('invalid-argument')) {
+          errorMessage = 'Invalid data format. Please check your post content.';
+        } else if (err.message.includes('quota-exceeded')) {
+          errorMessage = 'Database quota exceeded. Please try again later.';
+        } else if (err.message.includes('not-found')) {
+          errorMessage = 'Post not found. It may have been deleted.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   }, []);
 
   const deletePost = useCallback(async (id: string): Promise<boolean> => {
     try {
-      const response = await fetch(`/api/admin/posts/${id}`, {
-        method: 'DELETE',
-      });
+      const db = assertFirestore();
+      const postRef = doc(db, 'posts', id);
 
-      const result = await response.json();
-      if (result.success) {
-        setPosts(prev => prev.filter(post => post.id !== id));
-        return true;
-      } else {
-        throw new Error(result.error);
-      }
+      await deleteDoc(postRef);
+      setPosts(prev => prev.filter(post => post.id !== id));
+      return true;
     } catch (err) {
+      console.error('Error deleting post from Firestore:', err);
       setError(err instanceof Error ? err.message : 'Failed to delete post');
       return false;
     }
@@ -228,15 +344,26 @@ export function usePosts() {
 
   const getPost = useCallback(async (id: string): Promise<BlogPost | null> => {
     try {
-      const response = await fetch(`/api/admin/posts/${id}`);
-      const result = await response.json();
-      
-      if (result.success) {
-        return result.post;
-      } else {
-        throw new Error(result.error);
+      const db = assertFirestore();
+      const postRef = doc(db, 'posts', id);
+      const postDoc = await getDoc(postRef);
+
+      if (!postDoc.exists()) {
+        throw new Error('Post not found');
       }
+
+      const postData = postDoc.data();
+      return {
+        ...postData,
+        id: postDoc.id,
+        createdAt: postData.createdAt?.toDate?.() || new Date(),
+        updatedAt: postData.updatedAt?.toDate?.() || new Date(),
+        publishedAt: postData.publishedAt?.toDate?.() || undefined,
+        scheduledAt: postData.scheduledAt?.toDate?.() || undefined,
+        scheduledFor: postData.scheduledFor?.toDate?.() || undefined,
+      } as BlogPost;
     } catch (err) {
+      console.error('Error fetching post from Firestore:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch post');
       return null;
     }
@@ -256,17 +383,82 @@ export function usePosts() {
   const fetchStats = useCallback(async (): Promise<BlogStats | null> => {
     try {
       setStatsLoading(true);
-      const response = await fetch('/api/admin/posts/stats');
-      const result = await response.json();
-      
-      if (result.success) {
-        setStats(result.stats);
-        return result.stats;
-      } else {
-        setError(result.error || 'Failed to fetch statistics');
-        return null;
-      }
+
+      const db = assertFirestore();
+      const postsRef = collection(db, 'posts');
+
+      // Fetch all posts for statistics calculation
+      const allPostsSnapshot = await getDocs(postsRef);
+      const allPosts = allPostsSnapshot.docs.map(doc => doc.data());
+
+      // Calculate statistics
+      const totalPosts = allPosts.length;
+      const publishedPosts = allPosts.filter(p => p.status === 'published').length;
+      const draftPosts = allPosts.filter(p => p.status === 'draft').length;
+      const scheduledPosts = allPosts.filter(p => p.status === 'scheduled').length;
+      const archivedPosts = allPosts.filter(p => p.status === 'archived').length;
+      const featuredPosts = allPosts.filter(p => p.featured).length;
+
+      const totalViews = allPosts.reduce((sum, p) => sum + (p.views || 0), 0);
+      const totalLikes = allPosts.reduce((sum, p) => sum + (p.likes || 0), 0);
+      const totalComments = allPosts.reduce((sum, p) => sum + (p.comments || 0), 0);
+
+      // Calculate tag and category counts
+      const tagCounts: { [key: string]: number } = {};
+      const categoryCounts: { [key: string]: number } = {};
+
+      allPosts.forEach(post => {
+        (post.tags || []).forEach((tag: string) => {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        });
+        (post.categories || []).forEach((category: string) => {
+          categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+        });
+      });
+
+      const topTags = Object.entries(tagCounts)
+        .map(([tag, count]) => ({ tag, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      const topCategories = Object.entries(categoryCounts)
+        .map(([category, count]) => ({ category, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      const stats: BlogStats = {
+        totalPosts,
+        publishedPosts,
+        draftPosts,
+        scheduledPosts,
+        archivedPosts,
+        featuredPosts,
+        totalViews,
+        totalLikes,
+        totalComments,
+        avgWordsPerPost: 0, // Would need to calculate from content
+        avgReadTime: 0, // Would need to calculate from content
+        topTags,
+        topCategories,
+        recentActivity: [], // Would need more complex query
+        priorityDistribution: {
+          low: allPosts.filter(p => p.priority === 'low').length,
+          medium: allPosts.filter(p => p.priority === 'medium').length,
+          high: allPosts.filter(p => p.priority === 'high').length
+        },
+        statusDistribution: {
+          draft: draftPosts,
+          published: publishedPosts,
+          scheduled: scheduledPosts,
+          archived: archivedPosts
+        },
+        monthlyTrends: [] // Would need aggregation query
+      };
+
+      setStats(stats);
+      return stats;
     } catch (err) {
+      console.error('Error fetching stats from Firestore:', err);
       setError('Failed to fetch statistics');
       return null;
     } finally {
@@ -281,21 +473,50 @@ export function usePosts() {
     data?: BulkOperationData
   ): Promise<boolean> => {
     try {
-      const response = await fetch('/api/admin/posts/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, postIds, data }),
-      });
+      const db = assertFirestore();
+      const batch = writeBatch(db);
 
-      const result = await response.json();
-      if (result.success) {
-        // Refresh posts after bulk operation
-        await fetchPosts();
-        return true;
-      } else {
-        throw new Error(result.error);
+      for (const postId of postIds) {
+        const postRef = doc(db, 'posts', postId);
+
+        if (action === 'delete') {
+          batch.delete(postRef);
+        } else {
+          const updateData: any = { updatedAt: serverTimestamp() };
+
+          switch (action) {
+            case 'updateStatus':
+              updateData.status = data?.status;
+              if (data?.status === 'published') {
+                updateData.publishedAt = serverTimestamp();
+              }
+              break;
+            case 'updatePriority':
+              updateData.priority = data?.priority;
+              break;
+            case 'toggleFeatured':
+              // We'll need to fetch current value to toggle
+              const postDoc = await getDoc(postRef);
+              if (postDoc.exists()) {
+                updateData.featured = !postDoc.data().featured;
+              }
+              break;
+            case 'updateCategories':
+              updateData.categories = data?.categories || [];
+              break;
+          }
+
+          batch.update(postRef, updateData);
+        }
       }
+
+      await batch.commit();
+
+      // Refresh posts after bulk operation
+      await fetchPosts();
+      return true;
     } catch (err) {
+      console.error('Error performing bulk operation in Firestore:', err);
       setError(err instanceof Error ? err.message : 'Failed to perform bulk operation');
       return false;
     }
@@ -344,29 +565,73 @@ export function usePosts() {
     priority?: string;
   }): Promise<BlogPost[]> => {
     try {
-      const params = new URLSearchParams();
-      
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          if (Array.isArray(value)) {
-            value.forEach(item => params.append(`${key}[]`, item));
-          } else if (value instanceof Date) {
-            params.append(key, value.toISOString());
-          } else {
-            params.append(key, value.toString());
-          }
-        }
+      const db = assertFirestore();
+      const postsRef = collection(db, 'posts');
+
+      let q = query(postsRef, orderBy('createdAt', 'desc'));
+
+      // Apply filters
+      if (filters.status) {
+        q = query(q, where('status', '==', filters.status));
+      }
+
+      if (filters.featured !== undefined) {
+        q = query(q, where('featured', '==', filters.featured));
+      }
+
+      if (filters.priority) {
+        q = query(q, where('priority', '==', filters.priority));
+      }
+
+      // For array fields like tags and categories, we'll need to use array-contains
+      // Note: Firestore has limitations with multiple array-contains queries
+      if (filters.tags && filters.tags.length > 0) {
+        q = query(q, where('tags', 'array-contains-any', filters.tags));
+      }
+
+      if (filters.categories && filters.categories.length > 0) {
+        q = query(q, where('categories', 'array-contains-any', filters.categories));
+      }
+
+      const querySnapshot = await getDocs(q);
+      let searchResults = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt?.toDate?.() || new Date(),
+          updatedAt: data.updatedAt?.toDate?.() || new Date(),
+          publishedAt: data.publishedAt?.toDate?.() || undefined,
+          scheduledAt: data.scheduledAt?.toDate?.() || undefined,
+          scheduledFor: data.scheduledFor?.toDate?.() || undefined,
+        } as BlogPost;
       });
 
-      const response = await fetch(`/api/admin/posts/search?${params.toString()}`);
-      const result = await response.json();
-      
-      if (result.success) {
-        return result.posts;
-      } else {
-        throw new Error(result.error);
+      // Client-side filtering for text search and date ranges
+      if (filters.query) {
+        const searchTerm = filters.query.toLowerCase();
+        searchResults = searchResults.filter(post =>
+          post.title.toLowerCase().includes(searchTerm) ||
+          post.content.toLowerCase().includes(searchTerm) ||
+          (post.excerpt && post.excerpt.toLowerCase().includes(searchTerm))
+        );
       }
+
+      if (filters.dateFrom) {
+        searchResults = searchResults.filter(post =>
+          post.createdAt >= filters.dateFrom!
+        );
+      }
+
+      if (filters.dateTo) {
+        searchResults = searchResults.filter(post =>
+          post.createdAt <= filters.dateTo!
+        );
+      }
+
+      return searchResults;
     } catch (err) {
+      console.error('Error searching posts in Firestore:', err);
       setError(err instanceof Error ? err.message : 'Failed to search posts');
       return [];
     }
