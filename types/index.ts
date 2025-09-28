@@ -574,6 +574,8 @@ export interface BlogPost extends DailyPost {
   scheduledAt?: Date;
   featuredImage?: string;
   featured?: boolean;
+  votingPost?: boolean;
+  selectedMatchId?: string;
   priority?: 'low' | 'medium' | 'high';
   seoTitle?: string;
   seoDescription?: string;

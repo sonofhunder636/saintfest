@@ -44,6 +44,8 @@ interface PostMetadata {
   categories?: string[];
   featuredImage?: string;
   featured?: boolean;
+  votingPost?: boolean;
+  selectedMatchId?: string;
   priority?: 'low' | 'medium' | 'high';
   seoTitle?: string;
   seoDescription?: string;
@@ -68,6 +70,8 @@ function PostsManagementPageContent() {
     categories: [],
     priority: 'medium',
     featured: false,
+    votingPost: false,
+    selectedMatchId: undefined,
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -135,6 +139,8 @@ function PostsManagementPageContent() {
               categories: post.categories || [],
               featuredImage: post.featuredImage,
               featured: post.featured || false,
+              votingPost: post.votingPost || false,
+              selectedMatchId: post.selectedMatchId || undefined,
               priority: post.priority || 'medium',
               seoTitle: post.seoTitle,
               seoDescription: post.seoDescription,
@@ -154,6 +160,7 @@ function PostsManagementPageContent() {
           categories: [],
           priority: 'medium',
           featured: false,
+          votingPost: false,
         });
       }
     };
@@ -182,6 +189,7 @@ function PostsManagementPageContent() {
       categories: [],
       priority: 'medium',
       featured: false,
+      votingPost: false,
     });
     setSaveSuccess({ show: false, message: '' });
     setCurrentView('editor');
@@ -205,6 +213,7 @@ function PostsManagementPageContent() {
       categories: [],
       priority: 'medium',
       featured: false,
+      votingPost: false,
     });
     setSaveSuccess({ show: false, message: '' });
   };

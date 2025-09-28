@@ -10,7 +10,10 @@ import { Button, IconButton } from '@chakra-ui/button';
 import { Tag, TagLabel, TagCloseButton } from '@chakra-ui/tag';
 import { Alert, AlertIcon, AlertDescription } from '@chakra-ui/alert';
 import { Divider, Switch, useColorModeValue, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Spinner } from '@chakra-ui/react';
-import { Calendar, Clock, Save, Eye, Upload, Tag as TagIcon, Star, AlertTriangle, Search, Zap, CheckCircle, Plus, X } from 'lucide-react';
+import { Calendar, Clock, Save, Eye, Upload, Tag as TagIcon, Star, AlertTriangle, Search, Zap, CheckCircle, Plus, X, Vote } from 'lucide-react';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { PublishedBracket, PublishedMatch } from '@/types';
 
 interface PostMetadata {
   title: string;
@@ -24,6 +27,8 @@ interface PostMetadata {
   categories?: string[];
   featuredImage?: string;
   featured?: boolean;
+  votingPost?: boolean;
+  selectedMatchId?: string;
   priority?: 'low' | 'medium' | 'high';
   seoTitle?: string;
   seoDescription?: string;
@@ -71,12 +76,23 @@ export default function PostControlsSidebar({
     isAvailable?: boolean;
     message?: string;
   }>({ isChecking: false });
-  
+
+  // Tournament match state
+  const [bracketMatches, setBracketMatches] = useState<PublishedMatch[]>([]);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+
   const slugTimeoutRef = useRef<NodeJS.Timeout>();
   
   // Theme colors
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
+
+  // Fetch tournament matches when voting post is enabled
+  useEffect(() => {
+    if (metadata.votingPost && bracketMatches.length === 0 && !loadingMatches) {
+      fetchActiveBracketMatches();
+    }
+  }, [metadata.votingPost]);
 
   // Auto-generate slug from title
   const generateSlug = useCallback((title: string) => {
@@ -232,6 +248,48 @@ export default function PostControlsSidebar({
     onMetadataChange({
       ...metadata,
       featured: !metadata.featured,
+    });
+  };
+
+  // Voting Post toggle handler
+  const handleVotingToggle = () => {
+    onMetadataChange({
+      ...metadata,
+      votingPost: !metadata.votingPost,
+    });
+  };
+
+  // Tournament match handlers
+  const fetchActiveBracketMatches = async () => {
+    if (!db) {
+      console.error('Firestore database not initialized');
+      return;
+    }
+
+    setLoadingMatches(true);
+    try {
+      const bracketsCollection = collection(db, 'publishedBrackets');
+      const activeQuery = query(bracketsCollection, where('isActive', '==', true));
+      const snapshot = await getDocs(activeQuery);
+
+      if (!snapshot.empty) {
+        const activeBracket = snapshot.docs[0].data() as PublishedBracket;
+        setBracketMatches(activeBracket.matches || []);
+      } else {
+        setBracketMatches([]);
+      }
+    } catch (error) {
+      console.error('Error fetching bracket matches:', error);
+      setBracketMatches([]);
+    } finally {
+      setLoadingMatches(false);
+    }
+  };
+
+  const handleMatchSelection = (matchId: string) => {
+    onMetadataChange({
+      ...metadata,
+      selectedMatchId: matchId || undefined,
     });
   };
 
@@ -450,20 +508,21 @@ export default function PostControlsSidebar({
           </VStack>
         </FormControl>
 
-        {/* Priority and Featured Row */}
-        <HStack spacing={4} align="start">
-          <FormControl flex={1}>
-            <FormLabel>Priority</FormLabel>
-            <Select
-              value={metadata.priority || 'medium'}
-              onChange={(e) => handlePriorityChange(e.target.value)}
-            >
-              <option value="low">Low Priority</option>
-              <option value="medium">Medium Priority</option>
-              <option value="high">High Priority</option>
-            </Select>
-          </FormControl>
-          
+        {/* Priority Row */}
+        <FormControl>
+          <FormLabel>Priority</FormLabel>
+          <Select
+            value={metadata.priority || 'medium'}
+            onChange={(e) => handlePriorityChange(e.target.value)}
+          >
+            <option value="low">Low Priority</option>
+            <option value="medium">Medium Priority</option>
+            <option value="high">High Priority</option>
+          </Select>
+        </FormControl>
+
+        {/* Post Settings Row */}
+        <HStack spacing={6} align="start">
           <FormControl>
             <FormLabel>Featured Post</FormLabel>
             <HStack>
@@ -475,7 +534,48 @@ export default function PostControlsSidebar({
               <Star size={16} color={metadata.featured ? "#FFD700" : "#CBD5E0"} />
             </HStack>
           </FormControl>
+
+          <FormControl>
+            <FormLabel>Voting Post</FormLabel>
+            <HStack>
+              <Switch
+                isChecked={metadata.votingPost || false}
+                onChange={handleVotingToggle}
+                colorScheme="blue"
+              />
+              <Vote size={16} color={metadata.votingPost ? "#3182CE" : "#CBD5E0"} />
+            </HStack>
+          </FormControl>
         </HStack>
+
+        {/* Tournament Match Selection - Only show when Voting Post is enabled */}
+        {metadata.votingPost && (
+          <FormControl>
+            <FormLabel>Tournament Match</FormLabel>
+            {loadingMatches ? (
+              <HStack>
+                <Spinner size="sm" />
+                <Text fontSize="sm" color="gray.500">Loading tournament matches...</Text>
+              </HStack>
+            ) : bracketMatches.length > 0 ? (
+              <Select
+                placeholder="Select a tournament match..."
+                value={metadata.selectedMatchId || ''}
+                onChange={(e) => handleMatchSelection(e.target.value)}
+              >
+                {bracketMatches.map((match) => (
+                  <option key={match.id} value={match.id}>
+                    Round {match.roundNumber}: {match.saint1Name} vs {match.saint2Name}
+                  </option>
+                ))}
+              </Select>
+            ) : (
+              <Text fontSize="sm" color="gray.500">
+                No active tournament bracket found
+              </Text>
+            )}
+          </FormControl>
+        )}
 
         {/* Post Excerpt */}
         <FormControl>
