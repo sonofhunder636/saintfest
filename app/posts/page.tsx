@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useState, useMemo, useEffect } from "react";
-import { DailyPost } from "@/types";
+import { BlogPost as BlogPostType } from "@/types";
 import Navigation from "@/components/Navigation";
+import { assertFirestore } from "@/lib/firebase";
+import { collection, query, where, orderBy, onSnapshot, QueryDocumentSnapshot } from "firebase/firestore";
 
 interface BlogPost {
   id: string;
@@ -107,7 +109,7 @@ Also, check out these other posts for some considerations that I use for every b
     slug: "who-makes-the-cut-for-saintfest"
   },
   {
-    id: "6",
+    id: "7",
     title: "All Saints Day 2024",
     date: "2024-12-23",
     excerpt: "What a spectacular Saintfest! In the final moments of our reverie, the contest between St. Andrew and St. Augustine was locked completely up.",
@@ -115,7 +117,7 @@ Also, check out these other posts for some considerations that I use for every b
     slug: "all-saints-day-2024"
   },
   {
-    id: "7",
+    id: "8",
     title: "October 31",
     date: "2024-12-23",
     excerpt: "Against the Patron of France, it took anything and everything St. Augustine had. However, the honorable St. Jeanne d'Arc concedes the battle.",
@@ -123,7 +125,7 @@ Also, check out these other posts for some considerations that I use for every b
     slug: "october-31"
   },
   {
-    id: "8",
+    id: "9",
     title: "October 30",
     date: "2024-12-23",
     excerpt: "St. Andrew has secured his entry into our final contest! And man, what a name, what a patron.",
@@ -131,7 +133,7 @@ Also, check out these other posts for some considerations that I use for every b
     slug: "october-30"
   },
   {
-    id: "9",
+    id: "10",
     title: "October 29",
     date: "2024-12-23",
     excerpt: "St. Theodora admits that Jeanne d'Arc deserves the win when the voters happen to all be Cajun.",
@@ -139,7 +141,7 @@ Also, check out these other posts for some considerations that I use for every b
     slug: "october-29"
   },
   {
-    id: "10",
+    id: "11",
     title: "October 28",
     date: "2024-12-23",
     excerpt: "The Apostles, just like in the First Century, are unstoppable! St. James takes his seat within the Consecrated Quaternary.",
@@ -147,7 +149,7 @@ Also, check out these other posts for some considerations that I use for every b
     slug: "october-28"
   },
   {
-    id: "11",
+    id: "12",
     title: "October 27",
     date: "2024-12-23",
     excerpt: "The humble mendicant bows to the hierarchy of Holy Mother Church. St. Andrew proceeds!",
@@ -155,7 +157,7 @@ Also, check out these other posts for some considerations that I use for every b
     slug: "october-27"
   },
   {
-    id: "12",
+    id: "13",
     title: "October 26",
     date: "2024-12-23",
     excerpt: "While the victory is handed to St. Augustine, we all know that the heights of the glory he enjoys stand upon the shoulders of the giants before him.",
@@ -163,7 +165,7 @@ Also, check out these other posts for some considerations that I use for every b
     slug: "october-26"
   },
   {
-    id: "13",
+    id: "14",
     title: "October 25 – Honored Octonary",
     date: "2024-12-23",
     excerpt: "St. Jeanne d'Arc plants her banner in the name of the King and Queen of Heaven and, just like that, we have our Honored Octonary!!",
@@ -171,7 +173,7 @@ Also, check out these other posts for some considerations that I use for every b
     slug: "october-25-honored-octonary"
   },
   {
-    id: "14",
+    id: "15",
     title: "October 24",
     date: "2024-12-23",
     excerpt: "God's Dog carries the torch of victory another step toward being our Blessed Intercessor!",
@@ -179,7 +181,7 @@ Also, check out these other posts for some considerations that I use for every b
     slug: "october-24"
   },
   {
-    id: "15",
+    id: "16",
     title: "October 23",
     date: "2024-12-23",
     excerpt: "St. Ambrose leaves the Golden Tongue speechless and secures his spot in the Saintly Sixteen!",
@@ -194,68 +196,71 @@ export default function PostsPage() {
   const [postsToShow, setPostsToShow] = useState(10);
   const [dynamicPosts, setDynamicPosts] = useState<BlogPost[]>([]);
   const [isLoadingDynamic, setIsLoadingDynamic] = useState(true);
+  const [firestoreError, setFirestoreError] = useState<string | null>(null);
 
-  // Fetch dynamic posts from both API sources
+  // Fetch dynamic posts from Firestore
   useEffect(() => {
-    const fetchDynamicPosts = async () => {
-      try {
-        const allDynamicPosts: BlogPost[] = [];
+    try {
+      const db = assertFirestore();
 
-        // Fetch tournament posts (DailyPost system)
-        try {
-          const dailyResponse = await fetch('/api/posts?published=true');
-          if (dailyResponse.ok) {
-            const dailyResult = await dailyResponse.json();
-            if (dailyResult.success) {
-              const convertedDailyPosts: BlogPost[] = dailyResult.data.map((post: DailyPost) => ({
-                id: post.id,
-                title: post.title,
-                date: post.publishDate.toString(),
-                excerpt: post.content.substring(0, 200) + (post.content.length > 200 ? '...' : ''),
-                content: post.content,
-                slug: post.id // Use the post ID as slug for now
-              }));
-              allDynamicPosts.push(...convertedDailyPosts);
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching daily posts:', error);
-        }
-
-        // Removed automatic scheduled publishing from page load
-        // Scheduled posts should only be published by server-side cron job or explicit trigger
-        // Not every time a user visits the posts page
-
-        // Fetch blog posts (BlogPost system) - the posts saved via admin editor
-        try {
-          const blogResponse = await fetch('/api/admin/posts?status=published');
-          if (blogResponse.ok) {
-            const blogResult = await blogResponse.json();
-            if (blogResult.success) {
-              const convertedBlogPosts: BlogPost[] = blogResult.posts.map((post: any) => ({
-                id: post.id,
-                title: post.title,
-                date: post.publishedAt ? new Date(post.publishedAt).toISOString() : new Date(post.createdAt).toISOString(),
-                excerpt: post.excerpt || post.content.substring(0, 200) + (post.content.length > 200 ? '...' : ''),
-                content: post.content,
-                slug: post.slug
-              }));
-              allDynamicPosts.push(...convertedBlogPosts);
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching blog posts:', error);
-        }
-
-        setDynamicPosts(allDynamicPosts);
-      } catch (error) {
-        console.error('Error fetching dynamic posts:', error);
-      } finally {
+      if (!db) {
+        setFirestoreError('Firebase not initialized');
         setIsLoadingDynamic(false);
+        return;
       }
-    };
 
-    fetchDynamicPosts();
+      const unsubscribers: (() => void)[] = [];
+
+      // Query published posts from the posts collection
+      const postsQuery = query(
+        collection(db, 'posts'),
+        where('status', '==', 'published'),
+        orderBy('createdAt', 'desc')
+      );
+
+      let postsData: BlogPost[] = [];
+
+      const checkLoadingComplete = () => {
+        setDynamicPosts(postsData);
+        setIsLoadingDynamic(false);
+      };
+
+      // Subscribe to published posts
+      const unsubscribePosts = onSnapshot(
+        postsQuery,
+        (snapshot) => {
+          postsData = snapshot.docs.map((doc: QueryDocumentSnapshot) => {
+            const data = doc.data() as BlogPostType;
+            return {
+              id: doc.id,
+              title: data.title,
+              date: data.createdAt ? new Date(data.createdAt.toDate()).toISOString() : new Date().toISOString(),
+              excerpt: data.excerpt || data.content.substring(0, 200) + (data.content.length > 200 ? '...' : ''),
+              content: data.content,
+              slug: data.slug || doc.id
+            };
+          });
+          checkLoadingComplete();
+        },
+        (error) => {
+          console.error('Error fetching posts from Firestore:', error);
+          setFirestoreError(error.message);
+          checkLoadingComplete();
+        }
+      );
+
+      unsubscribers.push(unsubscribePosts);
+
+      // Cleanup function
+      return () => {
+        unsubscribers.forEach(unsubscribe => unsubscribe());
+      };
+
+    } catch (error) {
+      console.error('Error setting up Firestore listeners:', error);
+      setFirestoreError(error instanceof Error ? error.message : 'Failed to connect to Firestore');
+      setIsLoadingDynamic(false);
+    }
   }, []);
 
   // Combine historical and dynamic posts
@@ -439,6 +444,24 @@ export default function PostsPage() {
             fontSize: '0.875rem'
           }}>
             Loading latest posts...
+          </div>
+        )}
+
+
+        {/* Error indicator for Firestore issues */}
+        {firestoreError && (
+          <div style={{
+            textAlign: 'center',
+            padding: '1rem',
+            color: '#dc2626',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '0.375rem',
+            margin: '1rem 0',
+            fontFamily: 'var(--font-cormorant)',
+            fontSize: '0.875rem'
+          }}>
+            Unable to load latest posts: {firestoreError}
           </div>
         )}
 
