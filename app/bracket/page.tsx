@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ChakraProvider,
   Box,
@@ -17,12 +17,14 @@ import { Tournament, Saint } from '@/types';
 import { saintfestTheme } from '@/lib/chakra-theme';
 import Navigation from '@/components/Navigation';
 import TournamentBracket from '@/components/tournament/TournamentBracket';
+import PDFDownload from '@/components/bracket/PDFDownload';
 import { getActivePublishedBracket } from '@/lib/tournamentService';
 
 export default function PublicBracketPage() {
   const [publishedTournament, setPublishedTournament] = useState<Tournament | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const bracketRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadPublishedBracket();
@@ -111,9 +113,10 @@ export default function PublicBracketPage() {
   };
 
   const downloadBracket = async () => {
-    if (!publishedTournament) return;
-    // TODO: Implement client-side PDF generation or alternative download method
-    alert('PDF download feature will be implemented in a future update.');
+    if (!publishedTournament || !bracketRef.current) return;
+
+    // This function is now handled by the PDFDownload component
+    // The actual PDF generation logic is in the PDFDownload component
   };
 
   const shareBracket = async () => {
@@ -200,44 +203,17 @@ export default function PublicBracketPage() {
           {publishedTournament ? (
             <VStack spacing={8}>
               {/* Tournament Bracket Display - Same component as admin preview */}
-              <TournamentBracket tournament={publishedTournament} />
+              <Box ref={bracketRef}>
+                <TournamentBracket tournament={publishedTournament} />
+              </Box>
 
               {/* Download PDF Button */}
               <Box textAlign="center" py={8}>
-                <Button
-                  onClick={downloadBracket}
-                  size="lg"
-                  bg="saintfest.500"
-                  color="white"
-                  px={8}
-                  py={4}
-                  fontSize="lg"
-                  fontFamily="var(--font-league-spartan)"
-                  textTransform="uppercase"
-                  letterSpacing="wide"
-                  fontWeight="600"
-                  borderRadius="lg"
-                  boxShadow="lg"
-                  _hover={{
-                    bg: 'saintfest.600',
-                    transform: 'translateY(-2px)',
-                    boxShadow: 'xl'
-                  }}
-                  _active={{
-                    transform: 'translateY(0)'
-                  }}
-                  transition="all 0.2s"
-                >
-                  📄 Download Printable Bracket PDF
-                </Button>
-                <Text
-                  mt={3}
-                  fontSize="sm"
-                  color="gray.500"
-                  fontFamily="var(--font-cormorant)"
-                >
-                  Perfect for printing and filling out your predictions!
-                </Text>
+                <PDFDownload
+                  targetRef={bracketRef}
+                  filename={`saintfest-${publishedTournament.year}-bracket`}
+                  className="flex justify-center"
+                />
               </Box>
             </VStack>
           ) : (

@@ -1,52 +1,125 @@
 'use client';
 
-import { useState } from 'react';
-import { Bracket } from '@/types';
+import { useState, RefObject } from 'react';
+import {
+  Button,
+  VStack,
+  Text,
+  Box,
+  Alert,
+  AlertIcon,
+  useDisclosure
+} from '@chakra-ui/react';
+import { Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import ProgressModal from '@/components/ui/progress-modal';
 
 interface PDFDownloadProps {
-  bracket: Bracket;
+  targetRef: RefObject<HTMLElement>;
+  filename?: string;
   className?: string;
 }
 
-export default function PDFDownload({ bracket, className = '' }: PDFDownloadProps) {
+type ProgressStage = 'preparing' | 'capturing' | 'generating' | 'finalizing';
+
+export default function PDFDownload({ targetRef, filename = 'bracket', className = '' }: PDFDownloadProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(bracket.downloadUrl || null);
+  const [currentStage, setCurrentStage] = useState<ProgressStage>('preparing');
+  const [progress, setProgress] = useState(0);
+  const [success, setSuccess] = useState(false);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const updateProgress = (stage: ProgressStage, progressValue: number) => {
+    setCurrentStage(stage);
+    setProgress(progressValue);
+  };
 
   const generatePDF = async () => {
+    if (!targetRef.current) {
+      setError('Target element not found');
+      return;
+    }
+
     setIsGenerating(true);
     setError(null);
+    setSuccess(false);
+    onOpen();
 
     try {
-      const response = await fetch('/api/bracket/pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // Stage 1: Preparing
+      updateProgress('preparing', 10);
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Stage 2: Capturing
+      updateProgress('capturing', 25);
+      const canvas = await html2canvas(targetRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: targetRef.current.scrollWidth,
+        height: targetRef.current.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+        ignoreElements: (element) => {
+          return element.classList.contains('no-print');
         },
-        body: JSON.stringify({ bracketId: bracket.id }),
+        onclone: () => {
+          updateProgress('capturing', 50);
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF');
-      }
+      updateProgress('capturing', 70);
 
-      // The response contains the PDF blob
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      // Create download link
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${bracket.title.replace(/\s+/g, '_')}_Bracket.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Clean up
-      window.URL.revokeObjectURL(url);
-      
-      // Update download URL state
-      setDownloadUrl(url);
+      // Stage 3: Generating PDF
+      updateProgress('generating', 75);
+
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+
+      // Use larger page size for tournament brackets
+      const pdfWidth = 420; // A3 width in mm (landscape)
+      const pdfHeight = 297; // A3 height in mm (landscape)
+
+      const scaleX = pdfWidth / (imgWidth * 0.264583);
+      const scaleY = pdfHeight / (imgHeight * 0.264583);
+      const scale = Math.min(scaleX, scaleY, 1);
+
+      const finalWidth = (imgWidth * 0.264583) * scale;
+      const finalHeight = (imgHeight * 0.264583) * scale;
+
+      const offsetX = (pdfWidth - finalWidth) / 2;
+      const offsetY = (pdfHeight - finalHeight) / 2;
+
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a3',
+      });
+
+      updateProgress('generating', 85);
+
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      pdf.addImage(imgData, 'PNG', offsetX, offsetY, finalWidth, finalHeight);
+
+      // Stage 4: Finalizing
+      updateProgress('finalizing', 95);
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const downloadFilename = filename || `saintfest-bracket-${new Date().getFullYear()}`;
+      pdf.save(`${downloadFilename}.pdf`);
+
+      updateProgress('finalizing', 100);
+      setSuccess(true);
+
+      // Show success for 2 seconds, then close
+      setTimeout(() => {
+        onClose();
+        setSuccess(false);
+      }, 2000);
 
     } catch (err) {
       console.error('PDF generation error:', err);
@@ -56,125 +129,167 @@ export default function PDFDownload({ bracket, className = '' }: PDFDownloadProp
     }
   };
 
-  const checkExistingPDF = async () => {
-    try {
-      const response = await fetch(`/api/bracket/pdf?bracketId=${bracket.id}`);
-      const data = await response.json();
-      
-      if (data.downloadUrl) {
-        setDownloadUrl(data.downloadUrl);
-      }
-    } catch (err) {
-      console.error('Error checking existing PDF:', err);
-    }
-  };
-
-  // Check for existing PDF on mount
-  useState(() => {
-    if (!downloadUrl) {
-      checkExistingPDF();
-    }
-  });
-
   return (
-    <div className={`pdf-download ${className}`}>
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-          <p className="text-red-800 text-sm">{error}</p>
-        </div>
-      )}
-
-      <div className="flex gap-3">
-        <button
-          onClick={generatePDF}
-          disabled={isGenerating}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {isGenerating ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Generating PDF...
-            </>
-          ) : (
-            <>
-              <span className="text-lg">📄</span>
-              Generate PDF
-            </>
-          )}
-        </button>
-
-        {downloadUrl && !isGenerating && (
-          <a
-            href={downloadUrl}
-            download={`${bracket.title.replace(/\s+/g, '_')}_Bracket.pdf`}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 flex items-center gap-2"
-          >
-            <span className="text-lg">⬇️</span>
-            Download PDF
-          </a>
+    <Box className={className}>
+      <VStack spacing={4} align="center">
+        {/* Error Alert */}
+        {error && !isOpen && (
+          <Alert status="error" borderRadius="lg" maxW="md">
+            <AlertIcon />
+            <VStack spacing={1} align="flex-start">
+              <Text fontSize="sm" fontWeight="600">
+                Download Failed
+              </Text>
+              <Text fontSize="xs" color="red.600">
+                {error}
+              </Text>
+            </VStack>
+          </Alert>
         )}
-      </div>
 
-      <p className="text-sm text-gray-600 mt-2">
-        PDF will be formatted for letter size paper in landscape orientation, perfect for printing.
-      </p>
-    </div>
+        {/* Enhanced Download Button */}
+        <Button
+          onClick={generatePDF}
+          isDisabled={isGenerating}
+          size="lg"
+          bg="saintfest.500"
+          color="white"
+          px={8}
+          py={4}
+          fontSize="lg"
+          fontFamily="var(--font-league-spartan)"
+          textTransform="uppercase"
+          letterSpacing="wide"
+          fontWeight="600"
+          borderRadius="lg"
+          boxShadow="lg"
+          leftIcon={<Download size={20} />}
+          _hover={{
+            bg: 'saintfest.600',
+            transform: 'translateY(-2px)',
+            boxShadow: 'xl'
+          }}
+          _active={{
+            transform: 'translateY(0)'
+          }}
+          _disabled={{
+            opacity: 0.6,
+            cursor: 'not-allowed',
+            transform: 'none',
+            _hover: {
+              transform: 'none',
+              bg: 'saintfest.500'
+            }
+          }}
+          transition="all 0.2s ease"
+        >
+          Download Printable Bracket PDF
+        </Button>
+
+        {/* Description Text */}
+        <Text
+          fontSize="sm"
+          color="gray.500"
+          fontFamily="var(--font-cormorant)"
+          textAlign="center"
+          maxW="sm"
+        >
+          Perfect for printing and filling out your predictions! High-quality PDF formatted in landscape orientation.
+        </Text>
+      </VStack>
+
+      {/* Progress Modal */}
+      <ProgressModal
+        isOpen={isOpen}
+        onClose={onClose}
+        currentStage={currentStage}
+        progress={progress}
+        error={error}
+        success={success}
+      />
+    </Box>
   );
 }
 
-// Utility hook for managing PDF operations
-export function usePDFGeneration(bracket: Bracket) {
+// Enhanced hook for client-side PDF generation
+export function usePDFGeneration(targetRef: RefObject<HTMLElement>, filename?: string) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(bracket.downloadUrl || null);
 
-  const generatePDF = async (): Promise<string | null> => {
+  const generatePDF = async (): Promise<boolean> => {
+    if (!targetRef.current) {
+      setError('Target element not found');
+      return false;
+    }
+
     setIsGenerating(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/bracket/pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ bracketId: bracket.id }),
+      // Capture the element as canvas with optimized settings for tournament brackets
+      const canvas = await html2canvas(targetRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: targetRef.current.scrollWidth,
+        height: targetRef.current.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+        // Optimizations for complex layouts
+        ignoreElements: (element) => {
+          // Skip elements that might cause issues
+          return element.classList.contains('no-print');
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF');
-      }
+      // Calculate optimal PDF sizing
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      setDownloadUrl(url);
-      return url;
+      // Use larger page size for tournament brackets
+      const pdfWidth = 420; // A3 width in mm (landscape) for better fit
+      const pdfHeight = 297; // A3 height in mm (landscape)
+
+      const scaleX = pdfWidth / (imgWidth * 0.264583);
+      const scaleY = pdfHeight / (imgHeight * 0.264583);
+      const scale = Math.min(scaleX, scaleY, 1);
+
+      const finalWidth = (imgWidth * 0.264583) * scale;
+      const finalHeight = (imgHeight * 0.264583) * scale;
+
+      const offsetX = (pdfWidth - finalWidth) / 2;
+      const offsetY = (pdfHeight - finalHeight) / 2;
+
+      // Create PDF with tournament bracket optimizations
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a3', // Larger format for better bracket visibility
+      });
+
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      pdf.addImage(imgData, 'PNG', offsetX, offsetY, finalWidth, finalHeight);
+
+      // Download with descriptive filename
+      const downloadFilename = filename || `saintfest-bracket-${new Date().getFullYear()}`;
+      pdf.save(`${downloadFilename}.pdf`);
+
+      return true;
 
     } catch (err) {
       console.error('PDF generation error:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate PDF');
-      return null;
+      return false;
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const downloadPDF = (filename?: string) => {
-    if (!downloadUrl) return;
-
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = filename || `${bracket.title.replace(/\s+/g, '_')}_Bracket.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   return {
     isGenerating,
     error,
-    downloadUrl,
-    generatePDF,
-    downloadPDF
+    generatePDF
   };
 }
