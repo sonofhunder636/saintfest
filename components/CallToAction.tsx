@@ -54,7 +54,7 @@ export default function CallToAction() {
           type: 'download-bracket' as const,
           message: `The Saintfest ${year} bracket is ready! Download and print your copy to follow along`,
           buttonText: `Download ${year} Bracket`,
-          buttonLink: `/bracket/${year}/download`
+          buttonLink: `/bracket/`
         };
       }
 
