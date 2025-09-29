@@ -54,8 +54,15 @@ export default function PDFDownload({ targetRef, filename = 'bracket', className
 
       // Stage 2: Capturing
       updateProgress('capturing', 25);
+
+      // Calculate optimal DPI for printing (150 DPI target)
+      const printDPI = 150;
+      const screenDPI = 96;
+      const dpiScale = printDPI / screenDPI;
+      const targetScale = Math.min(dpiScale, 1.2); // Cap at 1.2x for file size control
+
       const canvas = await html2canvas(targetRef.current, {
-        scale: 2,
+        scale: targetScale,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -64,6 +71,9 @@ export default function PDFDownload({ targetRef, filename = 'bracket', className
         height: targetRef.current.scrollHeight,
         scrollX: 0,
         scrollY: 0,
+        removeContainer: true,
+        foreignObjectRendering: false,
+        imageTimeout: 5000,
         ignoreElements: (element) => {
           return element.classList.contains('no-print');
         },
@@ -80,9 +90,9 @@ export default function PDFDownload({ targetRef, filename = 'bracket', className
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
 
-      // Use larger page size for tournament brackets
-      const pdfWidth = 420; // A3 width in mm (landscape)
-      const pdfHeight = 297; // A3 height in mm (landscape)
+      // Use standard Letter size for tournament brackets
+      const pdfWidth = 279; // Letter width in mm (landscape - 11 inches)
+      const pdfHeight = 216; // Letter height in mm (landscape - 8.5 inches)
 
       const scaleX = pdfWidth / (imgWidth * 0.264583);
       const scaleY = pdfHeight / (imgHeight * 0.264583);
@@ -97,13 +107,15 @@ export default function PDFDownload({ targetRef, filename = 'bracket', className
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
-        format: 'a3',
+        format: 'letter',
+        compress: true,
+        putOnlyUsedFonts: true
       });
 
       updateProgress('generating', 85);
 
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      pdf.addImage(imgData, 'PNG', offsetX, offsetY, finalWidth, finalHeight);
+      const imgData = canvas.toDataURL('image/jpeg', 0.6);
+      pdf.addImage(imgData, 'JPEG', offsetX, offsetY, finalWidth, finalHeight);
 
       // Stage 4: Finalizing
       updateProgress('finalizing', 95);
@@ -226,9 +238,15 @@ export function usePDFGeneration(targetRef: RefObject<HTMLElement>, filename?: s
     setError(null);
 
     try {
+      // Calculate optimal DPI for printing (150 DPI target)
+      const printDPI = 150;
+      const screenDPI = 96;
+      const dpiScale = printDPI / screenDPI;
+      const targetScale = Math.min(dpiScale, 1.2); // Cap at 1.2x for file size control
+
       // Capture the element as canvas with optimized settings for tournament brackets
       const canvas = await html2canvas(targetRef.current, {
-        scale: 2,
+        scale: targetScale,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -237,6 +255,9 @@ export function usePDFGeneration(targetRef: RefObject<HTMLElement>, filename?: s
         height: targetRef.current.scrollHeight,
         scrollX: 0,
         scrollY: 0,
+        removeContainer: true,
+        foreignObjectRendering: false,
+        imageTimeout: 5000,
         // Optimizations for complex layouts
         ignoreElements: (element) => {
           // Skip elements that might cause issues
@@ -248,9 +269,9 @@ export function usePDFGeneration(targetRef: RefObject<HTMLElement>, filename?: s
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
 
-      // Use larger page size for tournament brackets
-      const pdfWidth = 420; // A3 width in mm (landscape) for better fit
-      const pdfHeight = 297; // A3 height in mm (landscape)
+      // Use standard Letter size for tournament brackets
+      const pdfWidth = 279; // Letter width in mm (landscape - 11 inches)
+      const pdfHeight = 216; // Letter height in mm (landscape - 8.5 inches)
 
       const scaleX = pdfWidth / (imgWidth * 0.264583);
       const scaleY = pdfHeight / (imgHeight * 0.264583);
@@ -266,11 +287,13 @@ export function usePDFGeneration(targetRef: RefObject<HTMLElement>, filename?: s
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
-        format: 'a3', // Larger format for better bracket visibility
+        format: 'letter', // Standard format for printing
+        compress: true,
+        putOnlyUsedFonts: true
       });
 
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      pdf.addImage(imgData, 'PNG', offsetX, offsetY, finalWidth, finalHeight);
+      const imgData = canvas.toDataURL('image/jpeg', 0.6);
+      pdf.addImage(imgData, 'JPEG', offsetX, offsetY, finalWidth, finalHeight);
 
       // Download with descriptive filename
       const downloadFilename = filename || `saintfest-bracket-${new Date().getFullYear()}`;

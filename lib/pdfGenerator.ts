@@ -96,7 +96,7 @@ function generateBracketHTML(bracket: Bracket): string {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${bracket.title} Bracket</title>
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;600;700;800&display=swap');
+        /* Using system fonts for smaller PDF size */
         
         * {
           margin: 0;
@@ -105,7 +105,7 @@ function generateBracketHTML(bracket: Bracket): string {
         }
 
         body {
-          font-family: 'League Spartan', sans-serif;
+          font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
           background: white;
           width: 100%;
           height: 100vh;
@@ -478,7 +478,7 @@ function generatePublishedBracketHTML(bracket: PublishedBracket): string {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${bracket.title} Bracket</title>
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant:wght@400;600;700&family=Sorts+Mill+Goudy:ital,wght@0,400;1,400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy:ital,wght@0,400;1,400&display=swap');
 
         * {
           margin: 0;
@@ -487,7 +487,7 @@ function generatePublishedBracketHTML(bracket: PublishedBracket): string {
         }
 
         body {
-          font-family: 'Cormorant', serif;
+          font-family: 'Sorts Mill Goudy', serif;
           background: white;
           width: 100%;
           height: 100vh;

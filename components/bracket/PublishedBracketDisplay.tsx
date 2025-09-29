@@ -58,14 +58,14 @@ export default function PublishedBracketDisplay({ bracket }: PublishedBracketDis
 
   return (
     <ChakraProvider theme={saintfestTheme}>
-      <Box id="bracket-container" w="100%" minH="100vh" bg="cream.50">
+      <Box id="bracket-container" w="100%" minH="100vh" bg="white">
         {/* Bracket Container */}
         <Box position="relative" mx="auto" overflowX="auto" p={8}>
           <Box
             position="relative"
             width={`${bracket.dimensions.totalWidth * scale}px`}
             height={`${bracket.dimensions.totalHeight * scale}px`}
-            bg="cream.50"
+            bg="white"
           >
           {/* Connection Lines */}
           <svg
