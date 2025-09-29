@@ -96,7 +96,7 @@ function transformTournamentToPublishedBracket(
       categoryAffiliation: match.categoryAffiliation,
       isLeftSide: match.isLeftSide || false,
       isChampionship: match.isChampionship || false
-    }))
+    }));
   });
 
   console.log('transformTournamentToPublishedBracket: Final publishedMatches:', publishedMatches);
