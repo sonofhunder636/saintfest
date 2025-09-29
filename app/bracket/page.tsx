@@ -13,7 +13,7 @@ import {
   AlertIcon,
   VStack
 } from '@chakra-ui/react';
-import { Tournament } from '@/types';
+import { Tournament, Saint } from '@/types';
 import { saintfestTheme } from '@/lib/chakra-theme';
 import Navigation from '@/components/Navigation';
 import TournamentBracket from '@/components/tournament/TournamentBracket';
@@ -36,6 +36,23 @@ export default function PublicBracketPage() {
       console.log('Retrieved published bracket:', publishedBracket);
 
       if (publishedBracket) {
+        // Helper function to derive categoryKey from category name
+        const getCategoryKey = (categoryName: string): keyof Saint => {
+          const lowerName = categoryName.toLowerCase().replace(/\s+/g, '');
+          switch (lowerName) {
+            case 'martyrs': return 'martyrs';
+            case 'doctorsofthechurch': return 'doctorsofthechurch';
+            case 'confessors': return 'confessors';
+            case 'abbots&abbesses':
+            case 'abbotabbess': return 'abbotabbess';
+            case 'evangelists': return 'evangelist';
+            case 'virgin&widows':
+            case 'virginwidows':
+            case 'virgins': return 'virgins';
+            default: return 'martyrs'; // fallback
+          }
+        };
+
         // Convert PublishedBracket back to Tournament format for TournamentBracket component
         const tournament: Tournament = {
           id: publishedBracket.id,
@@ -44,13 +61,17 @@ export default function PublicBracketPage() {
           categories: publishedBracket.categories.map(cat => ({
             id: cat.id,
             name: cat.name,
+            categoryKey: getCategoryKey(cat.name),
             color: cat.color,
             position: cat.position,
             saints: cat.saints.map(saint => ({
               id: `saint-${saint.name}`, // Generate ID since we only have name
+              name: saint.name,
               displayName: saint.name,
               seed: saint.seed,
-              // Add other required Tournament saint fields as needed
+              popularityScore: 50, // Default value
+              eliminated: false,
+              // Add other optional Tournament saint fields as needed
             }))
           })),
           rounds: [], // We'll populate this from matches
@@ -61,7 +82,7 @@ export default function PublicBracketPage() {
           metadata: {
             totalSaints: 32,
             categoriesUsed: publishedBracket.categories.map(cat => cat.name),
-            selectionMethod: 'published',
+            selectionMethod: 'manual',
             generationTime: 0,
             textMeasurements: {
               longestName: '',
