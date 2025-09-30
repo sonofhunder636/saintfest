@@ -147,17 +147,17 @@ export default function TournamentBracket({
                   );
                 case 'bottom-left':
                   return layoutData.matches.filter(
-                    match => match.roundNumber === 1 && 
-                            match.isLeftSide === true && 
-                            match.matchNumber >= 5 && 
-                            match.matchNumber <= 8
+                    match => match.roundNumber === 1 &&
+                            match.isLeftSide === false &&
+                            match.matchNumber >= 9 &&
+                            match.matchNumber <= 12
                   );
                 case 'top-right':
                   return layoutData.matches.filter(
-                    match => match.roundNumber === 1 && 
-                            match.isLeftSide === false && 
-                            match.matchNumber >= 9 && 
-                            match.matchNumber <= 12
+                    match => match.roundNumber === 1 &&
+                            match.isLeftSide === true &&
+                            match.matchNumber >= 5 &&
+                            match.matchNumber <= 8
                   );
                 case 'bottom-right':
                   return layoutData.matches.filter(
@@ -205,7 +205,7 @@ export default function TournamentBracket({
               let isLeftSide: boolean;
               
               // Calculate horizontal position based on category position
-              if (position === 'top-left' || position === 'bottom-left') {
+              if (position === 'top-left' || position === 'top-right') {
                 labelX = 10; // Left side: 10px from absolute left
                 isLeftSide = true;
               } else {
