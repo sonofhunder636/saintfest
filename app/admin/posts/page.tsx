@@ -25,6 +25,7 @@ import {
 import { saintfestTheme } from '@/lib/chakra-theme';
 import { BarChart3, Plus, Settings } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { VotingWidget } from '@/types';
 
 // Dynamic imports for better performance
 const BlogDashboard = dynamic(() => import('@/components/admin/BlogDashboard'), { ssr: false });
@@ -49,6 +50,8 @@ interface PostMetadata {
   priority?: 'low' | 'medium' | 'high';
   seoTitle?: string;
   seoDescription?: string;
+  votingWidgets?: VotingWidget[];
+  multipleVoting?: boolean;
 }
 
 type ViewType = 'dashboard' | 'list' | 'editor';
@@ -72,6 +75,8 @@ function PostsManagementPageContent() {
     featured: false,
     votingPost: false,
     selectedMatchId: undefined,
+    votingWidgets: [],
+    multipleVoting: false,
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -148,6 +153,8 @@ function PostsManagementPageContent() {
               priority: post.priority || 'medium',
               seoTitle: post.seoTitle,
               seoDescription: post.seoDescription,
+              votingWidgets: post.votingWidgets || [],
+              multipleVoting: post.multipleVoting || false,
             });
           }
         } catch (error) {
@@ -165,6 +172,8 @@ function PostsManagementPageContent() {
           priority: 'medium',
           featured: false,
           votingPost: false,
+          votingWidgets: [],
+          multipleVoting: false,
         });
       }
     };
@@ -194,6 +203,8 @@ function PostsManagementPageContent() {
       priority: 'medium',
       featured: false,
       votingPost: false,
+      votingWidgets: [],
+      multipleVoting: false,
     });
     setSaveSuccess({ show: false, message: '' });
     setCurrentView('editor');
@@ -218,6 +229,8 @@ function PostsManagementPageContent() {
       priority: 'medium',
       featured: false,
       votingPost: false,
+      votingWidgets: [],
+      multipleVoting: false,
     });
     setSaveSuccess({ show: false, message: '' });
   };

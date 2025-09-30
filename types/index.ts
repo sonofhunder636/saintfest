@@ -586,6 +586,9 @@ export interface BlogPost extends DailyPost {
     wordCount?: number;
     readingTime?: number;
   };
+  // Saint Voting System fields
+  votingWidgets?: VotingWidget[];
+  multipleVoting?: boolean; // Whether multiple voting pairs are enabled
 }
 
 export interface VotingSession {
@@ -674,4 +677,78 @@ export interface RealtimeVoteUpdate {
   newVoteCount: number;
   totalVotes: number;
   percentage: number;
+}
+
+// ============================================================================
+// SAINT VOTING SYSTEM - For Blog Post Integration
+// ============================================================================
+
+export interface SaintVote {
+  id: string;
+  sessionId: string; // Reference to VotingSession
+  widgetId: string; // Unique identifier for the voting widget
+  saintId: string; // Which saint was voted for (saint1 or saint2)
+  voterHash: string; // Hash of browser fingerprint for deduplication
+  timestamp: Date;
+  ipHash?: string; // Optional IP hash for additional protection
+}
+
+export interface VotingWidget {
+  id: string; // Auto-generated from post slug + saint names
+  postSlug: string; // Blog post this widget belongs to
+  saint1Name: string; // First saint name (user input)
+  saint2Name: string; // Second saint name (user input)
+  saint1Id?: string; // Optional reference to Saint document
+  saint2Id?: string; // Optional reference to Saint document
+  createdAt: Date;
+  isActive: boolean; // Whether voting is currently allowed
+  order?: number; // Order within the post (for multiple widgets)
+}
+
+export interface VotingSession {
+  id: string;
+  widgetId: string; // Reference to VotingWidget
+  postSlug: string; // For easier querying
+  opensAt: Date; // When voting starts (post publish time)
+  closesAt: Date; // When voting ends (11:59:59 PM that day)
+  isActive: boolean; // Computed field based on current time
+  saint1Votes: number; // Current vote count for saint1
+  saint2Votes: number; // Current vote count for saint2
+  totalVotes: number; // saint1Votes + saint2Votes
+  lastUpdated: Date;
+}
+
+export interface VotingResults {
+  sessionId: string;
+  saint1Name: string;
+  saint2Name: string;
+  saint1Votes: number;
+  saint2Votes: number;
+  saint1Percentage: number;
+  saint2Percentage: number;
+  totalVotes: number;
+  userHasVoted: boolean; // Based on localStorage check
+  userVotedFor?: string; // Which saint the user voted for
+  votingEnded: boolean; // Whether voting period has ended
+  timeRemaining?: number; // Milliseconds until voting ends
+}
+
+export interface VotingAdminData {
+  sessionId: string;
+  widgetId: string;
+  postSlug: string;
+  postTitle?: string;
+  saint1Name: string;
+  saint2Name: string;
+  saint1Votes: number;
+  saint2Votes: number;
+  totalVotes: number;
+  opensAt: Date;
+  closesAt: Date;
+  isActive: boolean;
+  voteHistory: {
+    timestamp: Date;
+    saint1Votes: number;
+    saint2Votes: number;
+  }[];
 }

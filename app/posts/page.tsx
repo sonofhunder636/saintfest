@@ -234,7 +234,7 @@ export default function PostsPage() {
             return {
               id: doc.id,
               title: data.title,
-              date: data.createdAt ? new Date(data.createdAt.toDate()).toISOString() : new Date().toISOString(),
+              date: data.createdAt ? (data.createdAt instanceof Date ? data.createdAt.toISOString() : new Date((data.createdAt as any).toDate()).toISOString()) : new Date().toISOString(),
               excerpt: data.excerpt || data.content.substring(0, 200) + (data.content.length > 200 ? '...' : ''),
               content: data.content,
               slug: data.slug || doc.id

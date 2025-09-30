@@ -13,7 +13,7 @@ import { Divider, Switch, useColorModeValue, Accordion, AccordionItem, Accordion
 import { Calendar, Clock, Save, Eye, Upload, Tag as TagIcon, Star, AlertTriangle, Search, Zap, CheckCircle, Plus, X, Vote } from 'lucide-react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { PublishedBracket, PublishedMatch } from '@/types';
+import { PublishedBracket, PublishedMatch, VotingWidget } from '@/types';
 
 interface PostMetadata {
   title: string;
@@ -32,6 +32,9 @@ interface PostMetadata {
   priority?: 'low' | 'medium' | 'high';
   seoTitle?: string;
   seoDescription?: string;
+  // Saint Voting System fields
+  votingWidgets?: VotingWidget[];
+  multipleVoting?: boolean;
 }
 
 interface PostControlsSidebarProps {
@@ -80,6 +83,10 @@ export default function PostControlsSidebar({
   // Tournament match state
   const [bracketMatches, setBracketMatches] = useState<PublishedMatch[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
+
+  // Saint voting widget state
+  const [newSaint1Name, setNewSaint1Name] = useState('');
+  const [newSaint2Name, setNewSaint2Name] = useState('');
 
   const slugTimeoutRef = useRef<NodeJS.Timeout>();
   
@@ -253,9 +260,63 @@ export default function PostControlsSidebar({
 
   // Voting Post toggle handler
   const handleVotingToggle = () => {
+    const newVotingPost = !metadata.votingPost;
     onMetadataChange({
       ...metadata,
-      votingPost: !metadata.votingPost,
+      votingPost: newVotingPost,
+      // Initialize with empty arrays if enabling voting
+      votingWidgets: newVotingPost ? (metadata.votingWidgets || []) : undefined,
+      multipleVoting: newVotingPost ? (metadata.multipleVoting || false) : undefined,
+    });
+  };
+
+  // Multiple voting toggle handler
+  const handleMultipleVotingToggle = () => {
+    onMetadataChange({
+      ...metadata,
+      multipleVoting: !metadata.multipleVoting,
+    });
+  };
+
+  // Add new voting widget
+  const handleAddVotingWidget = () => {
+    if (!newSaint1Name.trim() || !newSaint2Name.trim()) return;
+
+    const newWidget: VotingWidget = {
+      id: `${metadata.slug || 'new-post'}-${newSaint1Name.toLowerCase().replace(/\s+/g, '-')}-vs-${newSaint2Name.toLowerCase().replace(/\s+/g, '-')}`,
+      postSlug: metadata.slug || '',
+      saint1Name: newSaint1Name.trim(),
+      saint2Name: newSaint2Name.trim(),
+      createdAt: new Date(),
+      isActive: true,
+      order: (metadata.votingWidgets || []).length,
+    };
+
+    onMetadataChange({
+      ...metadata,
+      votingWidgets: [...(metadata.votingWidgets || []), newWidget],
+    });
+
+    // Reset input fields
+    setNewSaint1Name('');
+    setNewSaint2Name('');
+  };
+
+  // Remove voting widget
+  const handleRemoveVotingWidget = (widgetId: string) => {
+    onMetadataChange({
+      ...metadata,
+      votingWidgets: (metadata.votingWidgets || []).filter(widget => widget.id !== widgetId),
+    });
+  };
+
+  // Update voting widget
+  const handleUpdateVotingWidget = (widgetId: string, updates: Partial<VotingWidget>) => {
+    onMetadataChange({
+      ...metadata,
+      votingWidgets: (metadata.votingWidgets || []).map(widget =>
+        widget.id === widgetId ? { ...widget, ...updates } : widget
+      ),
     });
   };
 
@@ -548,33 +609,95 @@ export default function PostControlsSidebar({
           </FormControl>
         </HStack>
 
-        {/* Tournament Match Selection - Only show when Voting Post is enabled */}
+        {/* Saint Voting Widgets - Only show when Voting Post is enabled */}
         {metadata.votingPost && (
-          <FormControl>
-            <FormLabel>Tournament Match</FormLabel>
-            {loadingMatches ? (
+          <VStack spacing={4} align="stretch">
+            {/* Multiple Voting Toggle */}
+            <FormControl>
+              <FormLabel>Multiple Voting Pairs</FormLabel>
               <HStack>
-                <Spinner size="sm" />
-                <Text fontSize="sm" color="gray.500">Loading tournament matches...</Text>
+                <Switch
+                  isChecked={metadata.multipleVoting || false}
+                  onChange={handleMultipleVotingToggle}
+                  colorScheme="green"
+                />
+                <Text fontSize="sm" color="gray.600">
+                  Allow multiple saint voting pairs in this post
+                </Text>
               </HStack>
-            ) : bracketMatches.length > 0 ? (
-              <Select
-                placeholder="Select a tournament match..."
-                value={metadata.selectedMatchId || ''}
-                onChange={(e) => handleMatchSelection(e.target.value)}
-              >
-                {bracketMatches.map((match) => (
-                  <option key={match.id} value={match.id}>
-                    Round {match.roundNumber}: {match.saint1Name} vs {match.saint2Name}
-                  </option>
-                ))}
-              </Select>
-            ) : (
-              <Text fontSize="sm" color="gray.500">
-                No active tournament bracket found
+            </FormControl>
+
+            {/* Add New Voting Widget */}
+            <FormControl>
+              <FormLabel>Add Voting Pair</FormLabel>
+              <VStack spacing={3} align="stretch">
+                <Input
+                  placeholder="First saint name..."
+                  value={newSaint1Name}
+                  onChange={(e) => setNewSaint1Name(e.target.value)}
+                />
+                <Input
+                  placeholder="Second saint name..."
+                  value={newSaint2Name}
+                  onChange={(e) => setNewSaint2Name(e.target.value)}
+                />
+                <Button
+                  leftIcon={<Plus size={14} />}
+                  onClick={handleAddVotingWidget}
+                  isDisabled={!newSaint1Name.trim() || !newSaint2Name.trim()}
+                  colorScheme="green"
+                  size="sm"
+                >
+                  Add Voting Pair
+                </Button>
+              </VStack>
+            </FormControl>
+
+            {/* Display Current Voting Widgets */}
+            {(metadata.votingWidgets || []).length > 0 && (
+              <FormControl>
+                <FormLabel>Current Voting Pairs ({(metadata.votingWidgets || []).length})</FormLabel>
+                <VStack spacing={2} align="stretch">
+                  {(metadata.votingWidgets || []).map((widget, index) => (
+                    <Box
+                      key={widget.id}
+                      p={3}
+                      borderWidth="1px"
+                      borderColor="gray.200"
+                      borderRadius="md"
+                      bg="gray.50"
+                    >
+                      <HStack justify="space-between" align="center">
+                        <VStack align="start" spacing={1} flex="1">
+                          <Text fontSize="sm" fontWeight="semibold">
+                            {widget.saint1Name} vs {widget.saint2Name}
+                          </Text>
+                          <Text fontSize="xs" color="gray.500">
+                            Widget ID: {widget.id}
+                          </Text>
+                        </VStack>
+                        <IconButton
+                          aria-label="Remove voting pair"
+                          icon={<X size={14} />}
+                          size="sm"
+                          variant="ghost"
+                          colorScheme="red"
+                          onClick={() => handleRemoveVotingWidget(widget.id)}
+                        />
+                      </HStack>
+                    </Box>
+                  ))}
+                </VStack>
+              </FormControl>
+            )}
+
+            {/* Show limit message if not multiple voting */}
+            {!metadata.multipleVoting && (metadata.votingWidgets || []).length >= 1 && (
+              <Text fontSize="xs" color="orange.600" fontStyle="italic">
+                Single voting mode: Only the first voting pair will be displayed. Enable "Multiple Voting Pairs" to show all.
               </Text>
             )}
-          </FormControl>
+          </VStack>
         )}
 
         {/* Post Excerpt */}

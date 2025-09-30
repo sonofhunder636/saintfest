@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import Navigation from "@/components/Navigation";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { ChakraProvider } from '@chakra-ui/react';
+import { saintfestTheme } from '@/lib/chakra-theme';
+import SaintVotingWidget from '@/components/voting/SaintVotingWidget';
+import { VotingWidget } from '@/types';
 
 interface BlogPost {
   id: string;
@@ -11,6 +15,9 @@ interface BlogPost {
   excerpt: string;
   content: string;
   slug: string;
+  votingPost?: boolean;
+  votingWidgets?: VotingWidget[];
+  multipleVoting?: boolean;
 }
 
 // Complete blog posts data from WordPress
@@ -49,7 +56,20 @@ Good questions. The prize awaiting the saint who wins this contest is the title 
 St. Thérèse of Lisieux was made famous for loving her death not out of a longing for her suffering to end, but instead out of a joyful hope that once she was in heaven she would be able to do far more good for those still living. Whether God truly fashions a crown, truly gives graces because of this game, is beside the point. Learning so much about a saint's life, praying with them for a time, and having them to turn to throughout a year is the blessing both of them and of us from God Who gives us to each other for support and care. Saintfest assists in highlighting all these truths and adds some fun in along the way.
 
 The post describes Saintfest as a game where participants learn about saints and choose a "Blessed Intercessor" who will pray for them throughout the year. The key point is not winning a literal crown, but developing a spiritual connection with a saint and learning about their life and faith.`,
-    slug: "help-wanted-blessed-intercessor"
+    slug: "help-wanted-blessed-intercessor",
+    votingPost: true,
+    multipleVoting: false,
+    votingWidgets: [
+      {
+        id: "help-wanted-blessed-intercessor-st-augustine-vs-st-thomas-aquinas",
+        postSlug: "help-wanted-blessed-intercessor",
+        saint1Name: "St. Augustine",
+        saint2Name: "St. Thomas Aquinas",
+        createdAt: new Date(),
+        isActive: true,
+        order: 0,
+      }
+    ]
   },
   {
     id: "3",
@@ -390,6 +410,23 @@ export default async function PostPage({ params }: PostPageProps) {
               ))
             )}
           </div>
+
+          {/* Voting Widgets - Auto-inserted after content */}
+          {post.votingPost && post.votingWidgets && post.votingWidgets.length > 0 && (
+            <div style={{ marginBottom: '3rem' }}>
+              <ChakraProvider theme={saintfestTheme}>
+                {post.votingWidgets
+                  .slice(0, post.multipleVoting ? undefined : 1) // Show only first if not multiple voting
+                  .map((widget) => (
+                    <SaintVotingWidget
+                      key={widget.id}
+                      widget={widget}
+                      postSlug={post.slug}
+                    />
+                  ))}
+              </ChakraProvider>
+            </div>
+          )}
 
           {/* Navigation */}
           <footer style={{
