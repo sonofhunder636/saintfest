@@ -201,7 +201,7 @@ export default function PublicBracketPage() {
 
         <Box as="main">
           {publishedTournament ? (
-            <VStack spacing={8}>
+            <Box>
               {/* Tournament Bracket Display - Same component as admin preview */}
               <Box ref={bracketRef}>
                 <TournamentBracket tournament={publishedTournament} />
@@ -215,7 +215,7 @@ export default function PublicBracketPage() {
                   className="flex justify-center"
                 />
               </Box>
-            </VStack>
+            </Box>
           ) : (
             /* Coming Soon Message */
             <Box textAlign="center" maxW="48rem" mx="auto" px={6} py={12}>

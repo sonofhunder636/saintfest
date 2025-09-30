@@ -104,7 +104,7 @@ export default function TournamentBracket({
     <Box w="full" bg={bgColor}>
       {/* Scrollable Bracket Container */}
       <Box w="full" overflow="auto">
-        <Box position="relative" mx="auto" p={4}>
+        <Box position="relative" p={4}>
           <Box position="relative" style={containerStyle}>
           
           {/* SVG Connection Lines */}
