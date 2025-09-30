@@ -374,7 +374,7 @@ function CategoryLabel({
       position="absolute"
       left={`${position.x}px`}
       top={`${centerY - (containerHeight / 2)}px`} // Center the container on the quadrant center
-      transform="rotate(-90deg)" // Consistent rotation for alignment with container above
+      transform={isLeftSide ? "rotate(-90deg)" : "rotate(90deg)"} // Different rotation based on side
       transformOrigin="center"
       zIndex={10}
       pointerEvents="none"
