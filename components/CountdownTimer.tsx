@@ -82,7 +82,6 @@ export default function CountdownTimer() {
       case 'active':
         return (
           <div className="text-center">
-            <div className="text-6xl mb-4">🎉</div>
             <h2 className="text-3xl font-sorts-mill text-gray-800 mb-4">
               Saintfest is Live!
             </h2>

@@ -64,7 +64,7 @@ export default function CallToAction() {
           type: 'daily-voting' as const,
           message: `Saintfest ${year} is live! Vote for today's matchup`,
           buttonText: 'Vote Now',
-          buttonLink: `/posts/day-${day}`
+          buttonLink: '/posts'
         };
       }
 
