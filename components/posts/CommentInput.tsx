@@ -58,14 +58,14 @@ function CommentInputComponent({
           postSlug: postSlug,
           content: inputValue.trim(),
           timestamp: new Date(),
-          status: 'pending' // Comments start as pending for moderation
+          status: 'approved' // Comments are immediately approved
         });
 
         toast({
           title: 'Comment submitted',
-          description: 'Your comment is pending approval. Thank you for your input!',
+          description: 'Your comment has been posted. Thank you for your input!',
           status: 'success',
-          duration: 5000,
+          duration: 3000,
           isClosable: true,
         });
 

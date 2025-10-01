@@ -39,8 +39,7 @@ function CommentsSectionComponent({ postSlug }: CommentsSectionProps) {
       const commentsQuery = query(
         commentsRef,
         where('postSlug', '==', postSlug),
-        where('status', '==', 'approved'),
-        orderBy('timestamp', 'asc')
+        where('status', '==', 'approved')
       );
 
       const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
@@ -55,6 +54,9 @@ function CommentsSectionComponent({ postSlug }: CommentsSectionProps) {
             status: data.status
           });
         });
+
+        // Sort comments by timestamp ascending (client-side)
+        commentsData.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
         setComments(commentsData);
         setIsLoading(false);
