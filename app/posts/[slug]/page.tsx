@@ -3,10 +3,8 @@ import { notFound } from "next/navigation";
 import Navigation from "@/components/Navigation";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ChakraProvider } from '@chakra-ui/react';
-import { saintfestTheme } from '@/lib/chakra-theme';
-import SaintVotingWidget from '@/components/voting/SaintVotingWidget';
-import { VotingWidget } from '@/types';
+import { VotingWidget, BlogPost as BlogPostType } from '@/types';
+import PostClient from './PostClient';
 
 interface BlogPost {
   id: string;
@@ -251,8 +249,11 @@ St. Nicholas of Myra, pray`,
   }
 ];
 
-// Generate static params for all blog posts
+// Generate static params for hardcoded blog posts only
 export async function generateStaticParams() {
+  // Only include hardcoded posts for static generation
+  // Dynamic posts will be handled at runtime by PostClient
+  console.log('Build time: returning only static posts for generateStaticParams');
   return blogPosts.map((post) => ({
     slug: post.slug,
   }));
@@ -267,12 +268,20 @@ interface PostPageProps {
 export default async function PostPage({ params }: PostPageProps) {
   const { slug } = await params;
 
-  const post = blogPosts.find(p => p.slug === slug);
+  // First, try to find in hardcoded posts
+  const staticPost = blogPosts.find(p => p.slug === slug);
 
-  if (!post) {
-    notFound();
+  if (staticPost) {
+    // Return static post immediately
+    return <PostPageContent post={staticPost} />;
   }
 
+  // If not found in static posts, render client component to handle dynamic posts
+  return <PostClient slug={slug} />;
+}
+
+// Static post content component
+function PostPageContent({ post }: { post: BlogPost }) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -414,17 +423,45 @@ export default async function PostPage({ params }: PostPageProps) {
           {/* Voting Widgets - Auto-inserted after content */}
           {post.votingPost && post.votingWidgets && post.votingWidgets.length > 0 && (
             <div style={{ marginBottom: '3rem' }}>
-              <ChakraProvider theme={saintfestTheme}>
-                {post.votingWidgets
-                  .slice(0, post.multipleVoting ? undefined : 1) // Show only first if not multiple voting
-                  .map((widget) => (
-                    <SaintVotingWidget
-                      key={widget.id}
-                      widget={widget}
-                      postSlug={post.slug}
-                    />
-                  ))}
-              </ChakraProvider>
+              <div style={{
+                padding: '1.5rem',
+                border: '2px solid #cbd5e0',
+                borderRadius: '0.5rem',
+                backgroundColor: 'white',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                maxWidth: '500px',
+                margin: '0 auto',
+                textAlign: 'center'
+              }}>
+                <h3 style={{
+                  fontSize: '1.25rem',
+                  fontFamily: 'var(--font-sorts-mill)',
+                  color: '#374151',
+                  marginBottom: '1rem',
+                  fontWeight: '600'
+                }}>
+                  Saint Voting
+                </h3>
+                <p style={{
+                  fontSize: '0.875rem',
+                  color: '#6b7280',
+                  fontFamily: 'var(--font-league-spartan)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  marginBottom: '1.5rem'
+                }}>
+                  Interactive voting available in development mode
+                </p>
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: '#f3f4f6',
+                  borderRadius: '0.375rem',
+                  fontSize: '0.875rem',
+                  color: '#4b5563'
+                }}>
+                  <strong>{post.votingWidgets[0]?.saint1Name}</strong> vs <strong>{post.votingWidgets[0]?.saint2Name}</strong>
+                </div>
+              </div>
             </div>
           )}
 

@@ -12,7 +12,7 @@ import { Alert, AlertIcon, AlertDescription } from '@chakra-ui/alert';
 import { Divider, Switch, useColorModeValue, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Spinner } from '@chakra-ui/react';
 import { Calendar, Clock, Save, Eye, Upload, Tag as TagIcon, Star, AlertTriangle, Search, Zap, CheckCircle, Plus, X, Vote } from 'lucide-react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { assertFirestore } from '@/lib/firebase';
 import { PublishedBracket, PublishedMatch, VotingWidget } from '@/types';
 
 interface PostMetadata {
@@ -121,17 +121,19 @@ export default function PostControlsSidebar({
     setSlugValidation({ isChecking: true });
 
     try {
-      const response = await fetch(`/api/admin/posts?slug=${encodeURIComponent(slug)}`);
-      const result = await response.json();
-      
-      if (result.success) {
-        const isDuplicate = result.posts && result.posts.length > 0;
-        setSlugValidation({
-          isChecking: false,
-          isAvailable: !isDuplicate,
-          message: isDuplicate ? 'This URL slug is already taken' : 'URL slug is available'
-        });
-      }
+      const db = assertFirestore();
+      const postsQuery = query(
+        collection(db, 'posts'),
+        where('slug', '==', slug)
+      );
+      const snapshot = await getDocs(postsQuery);
+
+      const isDuplicate = !snapshot.empty;
+      setSlugValidation({
+        isChecking: false,
+        isAvailable: !isDuplicate,
+        message: isDuplicate ? 'This URL slug is already taken' : 'URL slug is available'
+      });
     } catch (error) {
       setSlugValidation({
         isChecking: false,
@@ -322,13 +324,9 @@ export default function PostControlsSidebar({
 
   // Tournament match handlers
   const fetchActiveBracketMatches = async () => {
-    if (!db) {
-      console.error('Firestore database not initialized');
-      return;
-    }
-
     setLoadingMatches(true);
     try {
+      const db = assertFirestore();
       const bracketsCollection = collection(db, 'publishedBrackets');
       const activeQuery = query(bracketsCollection, where('isActive', '==', true));
       const snapshot = await getDocs(activeQuery);

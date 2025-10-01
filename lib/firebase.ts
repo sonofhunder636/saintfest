@@ -58,6 +58,7 @@ function initializeFirebase(): boolean {
     auth = getAuth(app);
     storage = getStorage(app);
 
+    console.log('Firebase initialized successfully');
     return true;
   } catch (error) {
     console.error('Firebase initialization error:', error);

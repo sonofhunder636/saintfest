@@ -209,6 +209,8 @@ export default function PostsPage() {
         return;
       }
 
+      console.log('Attempting to fetch dynamic posts from Firestore...');
+
       const unsubscribers: (() => void)[] = [];
 
       // Query published posts from the posts collection
