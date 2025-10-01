@@ -251,14 +251,56 @@ St. Nicholas of Myra, pray`,
   }
 ];
 
-// Generate static params for hardcoded blog posts only
+// Generate static params for ALL posts (static + dynamic)
 export async function generateStaticParams() {
-  // Only include hardcoded posts for static generation
-  // Dynamic posts will be handled at runtime by PostClient
-  console.log('Build time: returning only static posts for generateStaticParams');
-  return blogPosts.map((post) => ({
+  console.log('Build time: generating static params for ALL posts');
+
+  // Start with hardcoded posts
+  const staticParams = blogPosts.map((post) => ({
     slug: post.slug,
   }));
+
+  // Try to fetch dynamic posts from Firestore
+  try {
+    // Import Firebase functions only if needed
+    const { initializeApp, getApps } = await import('firebase/app');
+    const { getFirestore, collection, query, where, getDocs } = await import('firebase/firestore');
+
+    // Firebase config (same as in lib/firebase.ts)
+    const firebaseConfig = {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyDrXi3ZG2iaf5mjrGrridPjAalKyAG8fRk",
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "saintfestcode.firebaseapp.com",
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "saintfestcode",
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "saintfestcode.firebasestorage.app",
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "804981147510",
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:804981147510:web:68ede21d243cac65869c57"
+    };
+
+    // Initialize Firebase if not already initialized
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    const db = getFirestore(app);
+
+    // Query for published posts
+    const postsQuery = query(
+      collection(db, 'posts'),
+      where('status', '==', 'published')
+    );
+
+    const snapshot = await getDocs(postsQuery);
+    const dynamicParams = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return { slug: data.slug };
+    }).filter(param => param.slug); // Only include posts with valid slugs
+
+    console.log(`Generated static params for ${staticParams.length} static posts and ${dynamicParams.length} dynamic posts`);
+
+    // Combine static and dynamic params
+    return [...staticParams, ...dynamicParams];
+
+  } catch (error) {
+    console.log('Failed to fetch dynamic posts during build, using static posts only:', error);
+    return staticParams;
+  }
 }
 
 interface PostPageProps {
