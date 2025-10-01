@@ -5,18 +5,30 @@ import Navigation from "@/components/Navigation";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useState, useEffect } from 'react';
-import { BlogPost, BlogPost as BlogPostType } from '@/types';
+import { BlogPost as BlogPostType, VotingWidget } from '@/types';
 import { assertFirestore } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import CommentInput from '@/components/posts/CommentInput';
 import CommentsSection from '@/components/posts/CommentsSection';
+
+// Simple interface for our posts - only the properties we actually use
+interface SimplePost {
+  id: string;
+  title: string;
+  date: string; // Formatted date string for display
+  excerpt: string;
+  content: string;
+  slug: string;
+  votingPost?: boolean;
+  votingWidgets?: VotingWidget[];
+}
 
 interface PostClientProps {
   slug: string;
 }
 
 export default function PostClient({ slug }: PostClientProps) {
-  const [post, setPost] = useState<BlogPost | null>(null);
+  const [post, setPost] = useState<SimplePost | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,20 +51,26 @@ export default function PostClient({ slug }: PostClientProps) {
           const doc = snapshot.docs[0];
           const data = doc.data() as BlogPostType;
 
-          // Convert Firestore post to BlogPost format
-          const dynamicPost: BlogPost = {
+          // Convert Firestore BlogPost to SimplePost format
+          const publishDate = data.publishDate || data.createdAt;
+          const formattedDate = publishDate
+            ? (publishDate instanceof Date
+               ? publishDate.toISOString()
+               : new Date((publishDate as any).toDate()).toISOString())
+            : new Date().toISOString();
+
+          const simplePost: SimplePost = {
             id: doc.id,
             title: data.title,
-            date: data.createdAt ? (data.createdAt instanceof Date ? data.createdAt.toISOString() : new Date((data.createdAt as any).toDate()).toISOString()) : new Date().toISOString(),
+            date: formattedDate,
             excerpt: data.excerpt || data.content.substring(0, 200) + (data.content.length > 200 ? '...' : ''),
             content: data.content,
             slug: data.slug || doc.id,
-            votingPost: data.votingPost || false,
-            votingWidgets: data.votingWidgets || [],
-            multipleVoting: data.multipleVoting || false
+            votingPost: data.votingPost,
+            votingWidgets: data.votingWidgets
           };
 
-          setPost(dynamicPost);
+          setPost(simplePost);
         } else {
           setError('Post not found');
         }
@@ -362,7 +380,7 @@ export default function PostClient({ slug }: PostClientProps) {
                   fontSize: '0.875rem',
                   color: '#4b5563'
                 }}>
-                  <strong>{post.votingWidgets[0]?.saint1Name}</strong> vs <strong>{post.votingWidgets[0]?.saint2Name}</strong>
+                  <strong>{post.votingWidgets?.[0]?.saint1Name}</strong> vs <strong>{post.votingWidgets?.[0]?.saint2Name}</strong>
                 </div>
               </div>
             </div>

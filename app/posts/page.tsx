@@ -2,17 +2,29 @@
 
 import Link from "next/link";
 import { useState, useMemo, useEffect } from "react";
-import { BlogPost, BlogPost as BlogPostType } from "@/types";
+import { BlogPost as BlogPostType, VotingWidget } from "@/types";
 import Navigation from "@/components/Navigation";
 import { assertFirestore } from "@/lib/firebase";
 import { collection, query, where, orderBy, onSnapshot, QueryDocumentSnapshot } from "firebase/firestore";
+
+// Simple interface for our posts page - only the properties we actually use
+interface SimplePost {
+  id: string;
+  title: string;
+  date: string; // Formatted date string for display
+  excerpt: string;
+  content: string;
+  slug: string;
+  votingPost?: boolean;
+  votingWidgets?: VotingWidget[];
+}
 
 
 export default function PostsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [postsToShow, setPostsToShow] = useState(10);
-  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [posts, setPosts] = useState<SimplePost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [firestoreError, setFirestoreError] = useState<string | null>(null);
 
@@ -38,7 +50,7 @@ export default function PostsPage() {
         orderBy('createdAt', 'desc')
       );
 
-      let postsData: BlogPost[] = [];
+      let postsData: SimplePost[] = [];
 
       const checkLoadingComplete = () => {
         setPosts(postsData);
@@ -51,13 +63,23 @@ export default function PostsPage() {
         (snapshot) => {
           postsData = snapshot.docs.map((doc: QueryDocumentSnapshot) => {
             const data = doc.data() as BlogPostType;
+            // Convert Firestore BlogPost to SimplePost
+            const publishDate = data.publishDate || data.createdAt;
+            const formattedDate = publishDate
+              ? (publishDate instanceof Date
+                 ? publishDate.toISOString()
+                 : new Date((publishDate as any).toDate()).toISOString())
+              : new Date().toISOString();
+
             return {
               id: doc.id,
               title: data.title,
-              date: data.createdAt ? (data.createdAt instanceof Date ? data.createdAt.toISOString() : new Date((data.createdAt as any).toDate()).toISOString()) : new Date().toISOString(),
+              date: formattedDate,
               excerpt: data.excerpt || data.content.substring(0, 200) + (data.content.length > 200 ? '...' : ''),
               content: data.content,
-              slug: data.slug || doc.id
+              slug: data.slug || doc.id,
+              votingPost: data.votingPost,
+              votingWidgets: data.votingWidgets
             };
           });
           checkLoadingComplete();
@@ -93,7 +115,7 @@ export default function PostsPage() {
         post =>
           post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
           post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          post.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
+          (post.excerpt && post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
