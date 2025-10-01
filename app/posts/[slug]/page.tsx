@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { VotingWidget, BlogPost as BlogPostType } from '@/types';
 import PostClient from './PostClient';
+import CommentInput from '@/components/posts/CommentInput';
 
 interface BlogPost {
   id: string;
@@ -464,6 +465,9 @@ function PostPageContent({ post }: { post: BlogPost }) {
               </div>
             </div>
           )}
+
+          {/* Comment Input Section */}
+          <CommentInput placeholder="Share your thoughts about this post..." />
 
           {/* Navigation */}
           <footer style={{

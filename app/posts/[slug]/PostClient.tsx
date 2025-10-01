@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { VotingWidget, BlogPost as BlogPostType } from '@/types';
 import { assertFirestore } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import CommentInput from '@/components/posts/CommentInput';
 
 interface BlogPost {
   id: string;
@@ -377,6 +378,9 @@ export default function PostClient({ slug }: PostClientProps) {
               </div>
             </div>
           )}
+
+          {/* Comment Input Section */}
+          <CommentInput placeholder="Share your thoughts about this post..." />
 
           {/* Navigation */}
           <footer style={{
