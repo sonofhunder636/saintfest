@@ -5,23 +5,11 @@ import Navigation from "@/components/Navigation";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useState, useEffect } from 'react';
-import { VotingWidget, BlogPost as BlogPostType } from '@/types';
+import { BlogPost, BlogPost as BlogPostType } from '@/types';
 import { assertFirestore } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import CommentInput from '@/components/posts/CommentInput';
 import CommentsSection from '@/components/posts/CommentsSection';
-
-interface BlogPost {
-  id: string;
-  title: string;
-  date: string;
-  excerpt: string;
-  content: string;
-  slug: string;
-  votingPost?: boolean;
-  votingWidgets?: VotingWidget[];
-  multipleVoting?: boolean;
-}
 
 interface PostClientProps {
   slug: string;
@@ -69,7 +57,7 @@ export default function PostClient({ slug }: PostClientProps) {
           setError('Post not found');
         }
       } catch (firestoreError) {
-        console.error('Error fetching dynamic post:', firestoreError);
+        console.error('Error fetching post:', firestoreError);
         setError('Failed to load post from database');
       } finally {
         setIsLoading(false);
@@ -365,7 +353,7 @@ export default function PostClient({ slug }: PostClientProps) {
                   letterSpacing: '0.05em',
                   marginBottom: '1.5rem'
                 }}>
-                  Dynamic post with interactive voting
+                  Post with interactive voting
                 </p>
                 <div style={{
                   padding: '1rem',
