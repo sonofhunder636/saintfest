@@ -9,21 +9,26 @@ import {
   useToast,
   ChakraProvider
 } from '@chakra-ui/react';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { saintfestTheme } from '@/lib/chakra-theme';
 
 interface CommentInputProps {
   onSubmit?: (text: string) => void;
   placeholder?: string;
+  postSlug?: string;
 }
 
 function CommentInputComponent({
   onSubmit,
-  placeholder = "Share your thoughts..."
+  placeholder = "Share your thoughts...",
+  postSlug
 }: CommentInputProps) {
   const [inputValue, setInputValue] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!inputValue.trim()) {
       toast({
         title: 'Please enter some text',
@@ -34,20 +39,60 @@ function CommentInputComponent({
       return;
     }
 
-    if (onSubmit) {
-      onSubmit(inputValue.trim());
-    } else {
-      // Default behavior - just show success message
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      // If onSubmit prop is provided, use it (backward compatibility)
+      if (onSubmit) {
+        onSubmit(inputValue.trim());
+        setInputValue('');
+        return;
+      }
+
+      // If postSlug is provided, save to Firestore
+      if (postSlug && db) {
+        const commentsRef = collection(db, 'comments');
+        await addDoc(commentsRef, {
+          postSlug: postSlug,
+          content: inputValue.trim(),
+          timestamp: new Date(),
+          status: 'pending' // Comments start as pending for moderation
+        });
+
+        toast({
+          title: 'Comment submitted',
+          description: 'Your comment is pending approval. Thank you for your input!',
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+
+        setInputValue('');
+      } else {
+        // Fallback behavior
+        toast({
+          title: 'Comment submitted',
+          description: 'Thank you for your input!',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+        setInputValue('');
+      }
+    } catch (error) {
+      console.error('Error submitting comment:', error);
       toast({
-        title: 'Comment submitted',
-        description: 'Thank you for your input!',
-        status: 'success',
-        duration: 3000,
+        title: 'Error submitting comment',
+        description: 'Please try again later.',
+        status: 'error',
+        duration: 5000,
         isClosable: true,
       });
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setInputValue('');
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -87,7 +132,9 @@ function CommentInputComponent({
           colorScheme="saintfest"
           size="md"
           alignSelf="flex-end"
-          isDisabled={!inputValue.trim()}
+          isDisabled={!inputValue.trim() || isSubmitting}
+          isLoading={isSubmitting}
+          loadingText="Submitting..."
           _disabled={{
             opacity: 0.4,
             cursor: 'not-allowed'

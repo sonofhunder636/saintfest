@@ -679,6 +679,15 @@ export interface RealtimeVoteUpdate {
   percentage: number;
 }
 
+// Comment system types
+export interface PostComment {
+  id: string;
+  postSlug: string;
+  content: string;
+  timestamp: Date;
+  status: 'pending' | 'approved' | 'rejected';
+}
+
 // ============================================================================
 // SAINT VOTING SYSTEM - For Blog Post Integration
 // ============================================================================

@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { VotingWidget, BlogPost as BlogPostType } from '@/types';
 import PostClient from './PostClient';
 import CommentInput from '@/components/posts/CommentInput';
+import CommentsSection from '@/components/posts/CommentsSection';
 
 interface BlogPost {
   id: string;
@@ -467,7 +468,13 @@ function PostPageContent({ post }: { post: BlogPost }) {
           )}
 
           {/* Comment Input Section */}
-          <CommentInput placeholder="Share your thoughts about this post..." />
+          <CommentInput
+            placeholder="Share your thoughts about this post..."
+            postSlug={post.slug}
+          />
+
+          {/* Comments Section */}
+          <CommentsSection postSlug={post.slug} />
 
           {/* Navigation */}
           <footer style={{

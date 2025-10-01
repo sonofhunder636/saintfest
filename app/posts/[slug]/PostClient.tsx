@@ -9,6 +9,7 @@ import { VotingWidget, BlogPost as BlogPostType } from '@/types';
 import { assertFirestore } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import CommentInput from '@/components/posts/CommentInput';
+import CommentsSection from '@/components/posts/CommentsSection';
 
 interface BlogPost {
   id: string;
@@ -380,7 +381,13 @@ export default function PostClient({ slug }: PostClientProps) {
           )}
 
           {/* Comment Input Section */}
-          <CommentInput placeholder="Share your thoughts about this post..." />
+          <CommentInput
+            placeholder="Share your thoughts about this post..."
+            postSlug={post.slug}
+          />
+
+          {/* Comments Section */}
+          <CommentsSection postSlug={post.slug} />
 
           {/* Navigation */}
           <footer style={{
