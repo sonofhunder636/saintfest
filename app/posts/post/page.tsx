@@ -4,12 +4,13 @@ import Link from "next/link";
 import Navigation from "@/components/Navigation";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { BlogPost as BlogPostType, VotingWidget } from '@/types';
 import { assertFirestore } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import CommentInput from '@/components/posts/CommentInput';
 import CommentsSection from '@/components/posts/CommentsSection';
+import { useSearchParams } from 'next/navigation';
 
 // Simple interface for our posts - only the properties we actually use
 interface SimplePost {
@@ -23,16 +24,20 @@ interface SimplePost {
   votingWidgets?: VotingWidget[];
 }
 
-interface PostClientProps {
-  slug: string;
-}
-
-export default function PostClient({ slug }: PostClientProps) {
+function PostContent() {
+  const searchParams = useSearchParams();
+  const slug = searchParams.get('slug');
   const [post, setPost] = useState<SimplePost | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!slug) {
+      setError('No post slug provided');
+      setIsLoading(false);
+      return;
+    }
+
     const loadDynamicPost = async () => {
       try {
         setIsLoading(true);
@@ -441,5 +446,55 @@ export default function PostClient({ slug }: PostClientProps) {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function PostPage() {
+  return (
+    <Suspense fallback={
+      <div style={{minHeight: '100vh', backgroundColor: '#fffbeb', textAlign: 'center'}}>
+        <header style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 1000,
+          width: '100%',
+          backgroundColor: '#8FBC8F',
+          padding: '1rem 0',
+          marginBottom: '2rem'
+        }}>
+          <div style={{
+            maxWidth: '64rem',
+            margin: '0 auto',
+            padding: '0 1.5rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <Link href="/" style={{
+              fontSize: '2.5rem',
+              fontFamily: 'var(--font-sorts-mill)',
+              color: 'white',
+              textDecoration: 'none',
+              fontWeight: '600',
+              textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+            }}>
+              Saintfest
+            </Link>
+            <Navigation />
+          </div>
+        </header>
+        <main style={{maxWidth: '48rem', margin: '0 auto', padding: '3rem 1.5rem', textAlign: 'center'}}>
+          <div style={{
+            fontSize: '1.125rem',
+            color: '#6b7280',
+            fontFamily: 'var(--font-cormorant)'
+          }}>
+            Loading...
+          </div>
+        </main>
+      </div>
+    }>
+      <PostContent />
+    </Suspense>
   );
 }

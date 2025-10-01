@@ -329,7 +329,7 @@ export default function PostsPage() {
                   fontWeight: '600',
                   lineHeight: '1.2'
                 }}>
-                  <a href={`/posts/${post.slug}/`} style={{
+                  <a href={`/posts/post/?slug=${post.slug}`} style={{
                     color: '#374151',
                     textDecoration: 'none',
                     transition: 'color 0.2s'
@@ -362,7 +362,7 @@ export default function PostsPage() {
                   {post.excerpt}
                 </p>
 
-                <a href={`/posts/${post.slug}/`} style={{
+                <a href={`/posts/post/?slug=${post.slug}`} style={{
                   fontSize: '0.875rem',
                   fontFamily: 'var(--font-league-spartan)',
                   textTransform: 'uppercase',
